@@ -1,9 +1,19 @@
-Welcome to the Peer-to-Peer Straightforward Protocol (P2PSP) Project!
+Bienvenido a la implementación del P2PSP para el navegador!
 
-The P2PSP is a protocol for the streaming of real-time video/audio
-sequences on peer-to-Peer (P2P) networks. This file describes the
-P2PSP rules, and some tricks to overcome the limitations imposed by
-some NATs. For learnig about the use of the P2PSP, please, read the
-docs/manual.txt file.
+Esta rama de desarrollo estará dedicada a trabajar en la implementación 
+del protocolo p2psp con WebRTC. Junto a HTML5 y Javascript, WebRTC nos 
+permitirá crear un peer capaz de ser ejecutado en el navegador web del 
+usuario sin necesidad de plugins.
 
-More info at www.p2psp.org
+Para aprovechar al máximo la implementación en python existente, se partirá
+de la implementación que actualmente se encuentra en la rama principal de
+desarrollo (trunk) intentando adaptar el splitter a la técnología WebRTC manteniendo
+el actual lenguaje de programación. Sin embargo, por la naturaleza de la 
+implementación, el peer deberá ser reescrito en HTML5+Javascript+WebRTC.
+
+Este proyecto participa en el concurso universitario de software libre,
+puede obtener más información en http://www.concursosoftwarelibre.org/1314/
+
+Si quiere saber más acerca del protocolo P2PSP visite http://www.p2psp.org
+
+
