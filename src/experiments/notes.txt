@@ -1,0 +1,11 @@
+MediaSource Extensions
+-----------------------------------
+Draft: 
+ Latest: http://www.w3.org/TR/media-source/ 
+ (Chrome) Dec 13: https://dvcs.w3.org/hg/html-media/raw-file/tip/media-source/media-source.html
+
+Only supported by Google Chrome.
+After try it, the last version of Chrome (33.0.1750.117) only supports WebM (Vorbis/VP8) codec.
+Ogg (Theora/Vorbis) is not supported yet: Uncaught NotSupportedError: The implementation did not support the requested type of object or operation. 
+
+A good option for the Streaming Server with WebM is stream-m (https://code.google.com/p/stream-m/)

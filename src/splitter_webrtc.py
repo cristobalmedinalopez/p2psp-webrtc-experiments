@@ -53,7 +53,7 @@ class Splitter_WebRTC(Splitter_DBS):
           sys.stdout.write(Color.green)
           print peer_serve_socket.getsockname(), '\b: accepted connection from peer', peer
 
-          # WebSocket protocol handshake
+          # **** WebSocket protocol handshake ****
 
 	  # Recieve the WebSocket handshake request
 	  # OJO: El mensaje podría ser incorrecto, controlar eso.
@@ -73,6 +73,9 @@ class Splitter_WebRTC(Splitter_DBS):
 	  #Send WebSocket handshake response
 	  aceeptMessage='HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: '+accept_key+'\r\n\r\n'
 	  peer_serve_socket.send(aceeptMessage)
+
+
+	  # **** 
 	  
           # Send the header
           print "Sending", len(self.header), "bytes!!!!!!!!!"
