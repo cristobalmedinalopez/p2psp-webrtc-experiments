@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<!--
+GNU GENERAL PUBLIC LICENSE
+
+This is an example of a streaming video client that receives a stream 
+via websocket and sends it to the video tag via Media Source Extensions
+
+Copyright (C) 2014 Cristóbal Medina López
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<html>
+<head>
+<title>streaming using HTML5 Media Source extensions - Client</title>
+</head>
+<body>
+
+<video controls autoplay id="player"></video>
+
+<script>
+var video = document.getElementById("player");
+
+window.MediaSource = window.MediaSource || window.WebKitMediaSource;
+if (!!!window.MediaSource) {
+  alert('MediaSource API is not available');
+}
+
+var mediaSource = new MediaSource();
+var queue=[];
+var first=true;	
+
+video.src = window.URL.createObjectURL(mediaSource);
+
+function handleChunk(sourceBuffer,e){
+	//add stream to the queue
+	queue.push(e.data);
+	
+        if(first){
+		//Header is sent to player (consume stream of the queue)
+		var chunk=new Uint8Array(queue.shift());
+		sourceBuffer.appendBuffer(chunk);
+		first=false;
+	}
+}
+
+function callback(e) {
+
+  var sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vorbis,vp8"');
+  
+  sourceBuffer.addEventListener('updateend', function() {
+	  if (queue.length) {
+ 		//Sent to player (consume stream of the queue)
+	  	var chunk=new Uint8Array(queue.shift());
+		sourceBuffer.appendBuffer(chunk); 
+
+	 }else{
+		//end of stream
+		mediaSource.endOfStream();
+	 }
+  });
+ 
+  console.log('mediaSource readyState: ' + this.readyState);
+
+  try {
+	var host = "ws://127.0.0.1:9876/";
+				
+	s = new WebSocket(host);
+	s.binaryType = "arraybuffer";
+
+	s.onopen = function (e) { console.log("connected..."); };
+	s.onclose = function (e) { console.log("connection closed."); };
+	s.onerror = function (e) { console.log("connection error."); };
+	s.onmessage = function (e) { handleChunk(sourceBuffer,e);};
+
+  } catch (ex) {
+	console.log("connection exception:" + ex);
+  } 
+
+}
+
+mediaSource.addEventListener('sourceopen', callback);
+mediaSource.addEventListener('webkitsourceended', function(e) {
+  logger.log('mediaSource readyState: ' + this.readyState);
+}, false);
+
+</script>
+</body>
+</html>
