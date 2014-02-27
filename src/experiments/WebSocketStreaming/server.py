@@ -5,7 +5,9 @@ GNU GENERAL PUBLIC LICENSE
 This is an example of a streaming video server that sends a video 
 stream (WebM) via websocket to the Web browser.
 
-Copyright (C) 2014 Cristobal Medina Lopez
+Copyright (C) 2014 Vicente González Ruiz,
+                   Cristóbal Medina López,
+                   Juan Alvaro Muñoz Naranjo.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

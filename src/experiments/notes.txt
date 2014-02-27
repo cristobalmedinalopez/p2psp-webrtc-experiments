@@ -9,5 +9,18 @@ After try it, the last version of Chrome (33.0.1750.117) only supports WebM (Vor
 Ogg (Theora/Vorbis) is not supported yet: Uncaught NotSupportedError: The implementation did not support the requested type of object or operation. 
 
 A good option for the Streaming Server with WebM is stream-m (https://code.google.com/p/stream-m/)
-Run: java -cp lib/stream-m.jar StreamingServeserver.conf
+Run: java -cp lib/stream-m.jar StreamingServer server.conf
 Feed: ffmpeg -re -i test.webm -vcodec copy -acodec copy -f webm http://localhost:8080/publish/first?password=secret
+
+Server.py
+------------------------------------
+
+
+Client.html
+-----------------------------------
+It is necessary delete the http header to send the initial chunk to the MediaSource.
+This is erase:
+	HTTP/1.1 200 OK
+	Content-type: video/webm
+	Server: MiniHTTP
+
