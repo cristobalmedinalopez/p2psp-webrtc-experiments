@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/python -O
+# -*- coding: iso-8859-15 -*-
+
 '''
 GNU GENERAL PUBLIC LICENSE
 

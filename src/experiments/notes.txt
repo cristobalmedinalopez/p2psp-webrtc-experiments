@@ -18,8 +18,10 @@ Server.py
 
 Client.html
 -----------------------------------
-It is necessary delete the http header to send the initial chunk to the MediaSource.
-This is erase:
+
+- Using stream-m
+  It is necessary delete the http header to send the initial chunk to the MediaSource.
+  This is erase:
 	HTTP/1.1 200 OK
 	Content-type: video/webm
 	Server: MiniHTTP
