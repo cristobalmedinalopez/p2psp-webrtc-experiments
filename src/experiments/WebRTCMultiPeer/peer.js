@@ -23,6 +23,7 @@ function initiatorTrue(){
 
 // call start(true) to initiate
 function start(isInitiator) {
+     iniConnection.disabled=true;
      pc = new webkitRTCPeerConnection(configuration, {optional: [{RtpDataChannels: true}]});
 
      // send any ice candidates to the other peer
@@ -87,11 +88,12 @@ function setupChat() {
     };
 
     channel.onmessage = function (evt) {
-       document.getElementById("receive").innerHTML=evt.data;
+       document.getElementById("receive").innerHTML+="<br />"+evt.data;
     };
 }
 
 function sendChatMessage() {
+    document.getElementById("receive").innerHTML+="<br />"+msg.value;
     channel.send(msg.value);
 }
 
