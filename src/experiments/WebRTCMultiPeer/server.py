@@ -4,7 +4,7 @@
 '''
 GNU GENERAL PUBLIC LICENSE
 
-This is an example of a signaling server for a WebRTC chat.
+This is an example of a signaling server for a multi-party chat over WebRTC.
 
 Copyright (C) 2014 Cristóbal Medina López.
 
@@ -41,7 +41,7 @@ class Signaling(WebSocket):
 				print 'Answer'
 
 		if 'candidate' in decoded:
-			print 'Candidate num: '+decoded['idpeer']
+			print 'Candidate num: '+decoded['idtransmitter']
 
 		for client in self.server.connections.itervalues():
 					if client != self:
@@ -54,12 +54,10 @@ class Signaling(WebSocket):
 	def handleConnected(self):
 		print self.address, 'connected'
 
-		for client in self.server.connections.itervalues():
-			if client != self:
-				try:
-					client.sendMessage(str('{"numpeer":"'+str(len(self.server.connections))+'"}'))
-				except Exception as n:
-					print n
+		try:
+			self.sendMessage(str('{"numpeer":"'+str(len(self.server.connections))+'"}'))
+		except Exception as n:
+			print n
 
 	def handleClose(self):
 		print self.address, 'closed'
