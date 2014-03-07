@@ -4,6 +4,7 @@ GNU GENERAL PUBLIC LICENSE
 This is an example of a client-side for a multi-party chat over WebRTC.
 
 Copyright (C) 2014 Cristóbal Medina López.
+http://www.p2psp.org
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

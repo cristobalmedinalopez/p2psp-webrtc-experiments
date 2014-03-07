@@ -11,6 +11,8 @@ Copyright (C) 2014 Vicente González Ruiz,
                    Cristóbal Medina López,
                    Juan Alvaro Muñoz Naranjo.
 
+http://www.p2psp.org
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -58,12 +60,15 @@ class SimpleEcho(WebSocket):
 	    	#print chunk
 	    	self.sendMessage(buffer(chunk))
 	   '''
+
 	    file=open("test.webm","rb")
-            try:
+	    try:
 	   	chunk = file.read(1024)
 		while chunk:
 			self.sendMessage(buffer(chunk))
 			chunk = file.read(1024)
+			#If you send too fast the client crashes
+			time.sleep(0.01)
 	    finally:
 	   	file.close()
 

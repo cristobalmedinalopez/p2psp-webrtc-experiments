@@ -6,6 +6,7 @@ This is an example of a streaming video client that receives a stream
 via websocket and sends it to the video tag via Media Source Extensions
 
 Copyright (C) 2014 Cristóbal Medina López
+http://www.p2psp.org
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -46,7 +47,7 @@ video.src = window.URL.createObjectURL(mediaSource);
 function handleChunk(sourceBuffer,e){
 	//add stream to the queue
 	queue.push(e.data);
-	
+
         if(first){
 		//Header is sent to player (consume stream of the queue)
 		var chunk=new Uint8Array(queue.shift());
@@ -60,21 +61,24 @@ function callback(e) {
   var sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vorbis,vp8"');
   
   sourceBuffer.addEventListener('updateend', function() {
+
 	  if (queue.length) {
  		//Sent to player (consume stream of the queue)
 	  	var chunk=new Uint8Array(queue.shift());
 		sourceBuffer.appendBuffer(chunk); 
 
 	 }else{
-		//end of stream
-		mediaSource.endOfStream();
+		first=true;
+		//It is possible it consume too quickly and it is not the end
+		//mediaSource.endOfStream();
 	 }
   });
  
   console.log('mediaSource readyState: ' + this.readyState);
 
   try {
-	var host = "ws://127.0.0.1:9876/";
+	//use the ip of your ws server
+	var host = "ws://192.168.1.14:9876/";
 				
 	s = new WebSocket(host);
 	s.binaryType = "arraybuffer";
