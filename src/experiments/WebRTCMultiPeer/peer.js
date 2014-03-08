@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-var signalingChannel = new WebSocket("ws://192.168.1.14:9876/");
+var signalingChannel = new WebSocket("ws://192.168.118.131:9876/");
 var configuration = {iceServers: [{ url: 'stun:stun.l.google.com:19302' }]};
 //var configuration = {iceServers: [{ url: 'stun:150.214.150.137:3478' }]};
 var pcs=[];

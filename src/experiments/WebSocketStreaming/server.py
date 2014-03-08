@@ -62,6 +62,7 @@ class SimpleEcho(WebSocket):
 	   '''
 
 	    file=open("test.webm","rb")
+
 	    try:
 	   	chunk = file.read(1024)
 		while chunk:

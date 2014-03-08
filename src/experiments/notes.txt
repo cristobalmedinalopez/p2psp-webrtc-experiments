@@ -26,3 +26,7 @@ Client.html
 	Content-type: video/webm
 	Server: MiniHTTP
 
+- If a chunk is lost, the mediaSource will be closed. 
+  It returns the error below:
+  "An attempt was made to use an object that is not, or is no longer, usable.", name: "InvalidStateError", code: 11
+
