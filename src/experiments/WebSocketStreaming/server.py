@@ -29,15 +29,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import socket, threading, time, base64, hashlib, struct, binascii
 from SimpleWebSocketServer import WebSocket, SimpleWebSocketServer
 
-'''
-def receive_next_chunk(GET, source, sock, size, header_length):
+
+def receive_next_chunk(sock, size):
 	data = sock.recv(size)
+	
 	prev_size = 0
 	while len(data) < size:
 	    prev_size = len(data)
 	    data += sock.recv(size - len(data))
-	return data, sock
-'''
+	
+	return data
+
 class SimpleEcho(WebSocket):
 
         def handleMessage(self):
@@ -45,6 +47,7 @@ class SimpleEcho(WebSocket):
 
         def handleConnected(self):
             print self.address, 'connected'
+	  
 	    '''
 	    source_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	    GET_message = 'GET ' + "/consume/first" + ' HTTP/1.1\r\n'
@@ -54,15 +57,17 @@ class SimpleEcho(WebSocket):
 	    source_socket.connect(source)
 	    print source_socket.getsockname(), 'connected to', source
 	    source_socket.sendall(GET_message)
-            
+ 	    
+	    chunk = receive_next_chunk(source_socket, 59)
+	    print chunk
+	    chunk = receive_next_chunk(source_socket, 1024)
             while True:
-	    	chunk, source_socket = receive_next_chunk(GET_message, source, source_socket, 1024, 0)
-	    	#print chunk
 	    	self.sendMessage(buffer(chunk))
-	   '''
+		chunk = receive_next_chunk(source_socket, 1024)
+		time.sleep(0.01)
 
+	    '''
 	    file=open("test.webm","rb")
-
 	    try:
 	   	chunk = file.read(1024)
 		while chunk:
@@ -72,7 +77,7 @@ class SimpleEcho(WebSocket):
 			time.sleep(0.01)
 	    finally:
 	   	file.close()
-
+ 	    
         def handleClose(self):
             print self.address, 'closed'         
 
