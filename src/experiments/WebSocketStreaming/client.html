@@ -51,7 +51,9 @@ function handleChunk(sourceBuffer,e){
 
         if(first){
 		//Header is sent to player (consume stream of the queue)
-		var chunk=new Uint8Array(queue.shift());	
+		//var chunk=new Uint8Array(queue.shift());	
+		//sourceBuffer.appendBuffer(chunk);
+		var chunk=queue.shift();	
 		sourceBuffer.appendBuffer(chunk);
 		first=false;		
 	}
@@ -65,7 +67,7 @@ function callback(e) {
 
 	  if (queue.length) {
  		//Sent to player (consume stream of the queue)
-	  	var chunk=new Uint8Array(queue.shift());
+	  	var chunk=queue.shift();
 		sourceBuffer.appendBuffer(chunk); 
 	 }else{
 		first=true;
@@ -78,7 +80,7 @@ function callback(e) {
 
   try {
 	//use the ip of your ws server
-	var host = "ws://192.168.1.14:9876/";
+	var host = "ws://127.0.0.1:9876/";
 				
 	s = new WebSocket(host);
 	s.binaryType = "arraybuffer";

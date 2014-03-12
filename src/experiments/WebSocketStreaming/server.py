@@ -74,7 +74,7 @@ class SimpleEcho(WebSocket):
 			self.sendMessage(buffer(chunk))
 			chunk = file.read(1024)
 			#If you send too fast the client crashes
-			time.sleep(0.01)
+			#time.sleep(0.01)
 	    finally:
 	   	file.close()
  	    

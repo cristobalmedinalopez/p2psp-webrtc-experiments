@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-var signalingChannel = new WebSocket("ws://192.168.1.14:9876/");
+var signalingChannel = new WebSocket("ws://127.0.0.1:9876/");
 signalingChannel.binaryType = "arraybuffer";
 var configuration = {iceServers: [{ url: 'stun:stun.l.google.com:19302' }]};
 //var configuration = {iceServers: [{ url: 'stun:150.214.150.137:3478' }]};
@@ -59,14 +59,15 @@ function handleChunk(chunk,numblock){
 	queue[numblock]=chunk;
 	
 	//Buffering....
-	if (queue.length==300)
+	if (queue.length==10)
 		first=true;		
 
         if(first){
-		
+		//console.log("*******PRUEBA**********");
 		//Header is sent to player (consume stream of the queue)
-		var chunk=new Uint8Array(queue.shift());
-		//var chunk=new Uint8Array(queue[current++]);
+		//var chunk=new Uint8Array(queue.shift());
+		var chunk=new Uint8Array(queue[current]);
+		current=current+1;
 		try{		
 			sourceBuffer.appendBuffer(chunk);
 		}catch(e){
@@ -82,11 +83,12 @@ function callback(e) {
   sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vorbis,vp8"');
   
   sourceBuffer.addEventListener('updateend', function() {
-	  if (queue.length) {
+	  if (/*queue.length*/queue[current]!=undefined) {
  		//Sent to player (consume stream of the queue)
 		//console.log('sent to player')
-	  	var chunk=new Uint8Array(queue.shift());
-		//var chunk=new Uint8Array(queue[current++]);
+	  	//var chunk=new Uint8Array(queue.shift());
+		var chunk=new Uint8Array(queue[current]);
+		current=current+1
 		sourceBuffer.appendBuffer(chunk); 
 	 }else{
 		first=true;
@@ -188,6 +190,7 @@ function handleMessage(evt){
     if (message.numpeer){    
 		idpeer=message.numpeer-1;
 		console.log('Peer ID: '+idpeer);
+		document.getElementById("receive").innerHTML+="Peer ID: "+idpeer;
 		return;  	
     }  
    
