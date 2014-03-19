@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-var signalingChannel = new WebSocket("ws://192.168.118.131:9876/");
+var signalingChannel = new WebSocket("ws://127.0.0.1:9876/");
 var configuration = {iceServers: [{ url: 'stun:stun.l.google.com:19302' }]};
 //var configuration = {iceServers: [{ url: 'stun:150.214.150.137:3478' }]};
 var pcs=[];
@@ -37,6 +37,8 @@ iniConnection.onclick=function(e){
 	for (i=0;i<idpeer;i++){	
 		start(true,i);
 	}
+	iniConnection.disabled=true;
+	document.getElementById("receive").innerHTML="<b>Conecting...</b>"
 };
 
 btnHello.onclick=sendChatMessage;
@@ -127,6 +129,7 @@ function handleMessage(evt){
 function setupChat(i) {
     channel[i].onopen = function () {
         btnHello.disabled=false;
+	document.getElementById("chatcontrols").style.display="inline";
     };
 
     channel[i].onmessage = function (evt) {
@@ -135,11 +138,16 @@ function setupChat(i) {
 }
 
 function sendChatMessage() {
-    document.getElementById("receive").innerHTML+="<br />"+msg.value;
+    document.getElementById("receive").innerHTML+="<br />"+document.getElementById("login").value+ ": "+msg.value;
 	for (i=0;i<channel.length;i++){  
 		if (i!=idpeer){
 			console.log("send to "+i);  
-			channel[i].send(msg.value);
+			try{
+				channel[i].send(document.getElementById("login").value+ ": "+msg.value);
+			}catch(e){
+				console.log(i+" said bye!");
+			}
+
 		}
 	}
 }

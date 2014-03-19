@@ -1,0 +1,35 @@
+body{
+   margin: 0;
+   padding: 0;
+}
+.login{
+	background-color:#CCC;
+	width:100%;
+	color:#FFF;
+ 	margin-left: auto ;
+ 	margin-right: auto ;	
+	text-align: center;
+	font-size: large;
+}
+.main{
+	float:left; 
+}
+.super{
+	background-color:#252D35;
+	color:#FFF;
+	height:85px;
+}
+.logo{
+	width: 20%;
+	float:left;
+}
+.title{
+	width: 80%;
+	font-size:x-large;
+	margin-left: auto ;
+ 	margin-right: auto ;
+	text-align: center;
+}
+.chat{
+	display: none;
+}

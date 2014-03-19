@@ -1,25 +1,58 @@
 <!DOCTYPE html>
+<!--
+
+  This is an example of a client-side for a multi-party chat over WebRTC.
+  Copyright (C) 2014 Cristóbal Medina López.
+  GNU/GPL v3 or later http://www.gnu.org/licenses/gpl-3.0.html
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+ -->
+
 <html>
 <head>
 <meta name="author" content="Cristóbal Medina López" />
-<title>WebRTC Peer Example</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+<title>WebRTC Multi-Party Chat Example</title>
 </head>
 <body>
 
+
 <div>
-  <div>
-    <button id="initiateConnection">Initiate Connection</button>
-
-    <br />
-    <input id="msg" type="text" name="msg">
+  <div id="header" class="super">
+     <div class="logo"><img src="imgs/p2psp.png" height="80px" /></div>
+     <div class="title"><b>Experiments</b> <br />WebRTC Multi-Party Chat Example</div>
+  </div>
+  <div class="login">
+	Nickname:
+    <input id="login" type="text" name="login">
+    <button id="initiateConnection">Enter</button>
+  </div>
+  <div id="chatcontrols" class="chat">
+	<input id="msg" type="text" name="msg">
     <button id="sayHello">Send</button>
+	<br />Received Messages:
   </div>
-
-  Received Messages:
   <div id="receive">
-  
-  </div>
-
+	 <br />
+	  Hello, welcome to the p2psp team chat room. This chat works via P2P network and the messages are not stored in any server, the communication is peer to peer between the web browsers. 
+<br /><br />
+<b>First, write a nickname and click the button enter.</b>
+<br /><br />
+This version is only working with the last version of Chrome.
+<br /><br />
+Enjoy!
+	  </div>
   <script src="peer.js"></script>
 </div>
 </body>

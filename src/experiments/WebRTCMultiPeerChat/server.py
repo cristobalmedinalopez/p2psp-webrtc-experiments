@@ -53,10 +53,12 @@ class Signaling(WebSocket):
 
 
 	def handleConnected(self):
+		global nextid
 		print self.address, 'connected'
 
 		try:
-			self.sendMessage(str('{"numpeer":"'+str(len(self.server.connections))+'"}'))
+			self.sendMessage(str('{"numpeer":"'+str(nextid)+'"}'))
+			nextid=nextid+1
 		except Exception as n:
 			print n
 
@@ -70,6 +72,7 @@ class Signaling(WebSocket):
 					print n '''       
 
 if __name__ == '__main__':
-    server = SimpleWebSocketServer('', 9876, Signaling)
-    server.serveforever()
+	nextid = 1
+	server = SimpleWebSocketServer('', 9876, Signaling)
+	server.serveforever()
 
