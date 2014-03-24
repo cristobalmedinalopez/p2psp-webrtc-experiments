@@ -25,28 +25,27 @@ var configuration = {iceServers: [{ url: 'stun:stun.l.google.com:19302' }]};
 //var configuration = {iceServers: [{ url: 'stun:150.214.150.137:3478' }]};
 var pcs=[];
 var channel=[];
+var peerlist=[];
 var idpeer=0;
 var iniConnection = document.getElementById("initiateConnection");
-var icecandidates = document.getElementById("candidateices");
 var msg = document.getElementById("msg");
-var creator=document.getElementById("creator");
-var btnHello= document.getElementById("sayHello");
-btnHello.disabled=true;
+var btnSend= document.getElementById("send");
+btnSend.disabled=true;
 
 iniConnection.onclick=function(e){
-	for (i=0;i<idpeer;i++){	
-		start(true,i);
+	document.getElementById("receive").innerHTML="<b>Conecting...</b>";
+	for (i in peerlist){
+		start(true,peerlist[i]);
 	}
 	iniConnection.disabled=true;
-	document.getElementById("receive").innerHTML="<b>Conecting...</b>"
 };
 
-btnHello.onclick=sendChatMessage;
+btnSend.onclick=sendChatMessage;
 
-// call start(true) to initiate
+// call start(true,i) to initiate
 function start(isInitiator,i) {
      //iniConnection.disabled=true;
-	
+	console.log("creado para: "+i);
 	pcs[i] = new webkitRTCPeerConnection(configuration, {optional: [{RtpDataChannels: true}]});
 	
 
@@ -93,8 +92,17 @@ function handleMessage(evt){
 	var message = JSON.parse(evt.data);
 	
     if (message.numpeer){    
-		idpeer=message.numpeer-1;
+		idpeer=message.numpeer;
 		console.log('Peer ID: '+idpeer);
+		return;  	
+    }  
+
+	if (message.peerlist){    
+		console.log('Peer List '+message.peerlist);
+		peerlist=JSON.parse(message.peerlist);
+		for (i in peerlist){
+			console.log("Peer: "+peerlist[i]);
+		}
 		return;  	
     }  
    
@@ -104,6 +112,8 @@ function handleMessage(evt){
 
     if (!pcs[id]) { 
 		console.log('%cCreate a new PeerConection','background: #222; color: #bada55');
+		peerlist.push(id);
+		console.log("PEER LIST UPDATE: "+peerlist);
 		start(false,id);
     } 	
 
@@ -128,7 +138,7 @@ function handleMessage(evt){
 
 function setupChat(i) {
     channel[i].onopen = function () {
-        btnHello.disabled=false;
+        btnSend.disabled=false;
 	document.getElementById("chatcontrols").style.display="inline";
     };
 
@@ -139,11 +149,11 @@ function setupChat(i) {
 
 function sendChatMessage() {
     document.getElementById("receive").innerHTML+="<br />"+document.getElementById("login").value+ ": "+msg.value;
-	for (i=0;i<channel.length;i++){  
-		if (i!=idpeer){
-			console.log("send to "+i);  
+	for (i in peerlist){  
+		if (peerlist[i]!=idpeer){
+			console.log("send to "+peerlist[i]);  
 			try{
-				channel[i].send(document.getElementById("login").value+ ": "+msg.value);
+				channel[peerlist[i]].send(document.getElementById("login").value+ ": "+msg.value);
 			}catch(e){
 				console.log(i+" said bye!");
 			}

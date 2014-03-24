@@ -58,12 +58,16 @@ class Signaling(WebSocket):
 
 		try:
 			self.sendMessage(str('{"numpeer":"'+str(nextid)+'"}'))
+			self.sendMessage(str('{"peerlist":"'+str(peerlist)+'"}'))
+			peerlist.append(nextid)
+			peeridlist[self]=nextid
 			nextid=nextid+1
 		except Exception as n:
 			print n
 
 	def handleClose(self):
 		print self.address, 'closed'
+		peerlist.remove(peeridlist[self]);
 		'''for client in self.server.connections.itervalues():
 			if client != self:
 				try:
@@ -72,7 +76,9 @@ class Signaling(WebSocket):
 					print n '''       
 
 if __name__ == '__main__':
-	nextid = 1
+	nextid = 0
+	peerlist=[]
+	peeridlist={}
 	server = SimpleWebSocketServer('', 9876, Signaling)
 	server.serveforever()
 
