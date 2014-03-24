@@ -32,4 +32,6 @@ body{
 }
 .chat{
 	display: none;
+	min-height: 100%;
 }
+
