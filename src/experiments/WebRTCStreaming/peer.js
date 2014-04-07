@@ -27,11 +27,13 @@ var configuration = {iceServers: [{ url: 'stun:stun.l.google.com:19302' }]};
 var pcs=[];
 var channel=[];
 var idpeer=0;
+var peerlist=[];
 var iniConnection = document.getElementById("initiateConnection");
 var icecandidates = document.getElementById("candidateices");
 var msg = document.getElementById("msg");
 var creator=document.getElementById("creator");
 var btnHello= document.getElementById("sayHello");
+var temp=0
 btnHello.disabled=true;
 
 // ---------------- Streaming Video Part ----------------
@@ -51,27 +53,22 @@ var current=0;
 
 video.src = window.URL.createObjectURL(mediaSource);
 
-function handleChunk(chunk,numblock){
+function handleChunk(chunk){
 	
 	//add stream to the queue
-	//queue.push(chunk);
-
-	queue[numblock]=chunk;
-	
+	queue.push(chunk);
 	//Buffering....
 	if (queue.length==10)
 		first=true;		
 
         if(first){
-		//console.log("*******PRUEBA**********");
+
 		//Header is sent to player (consume stream of the queue)
-		//var chunk=new Uint8Array(queue.shift());
-		var chunk=new Uint8Array(queue[current]);
-		current=current+1;
+		var chunk=new Uint8Array(queue.shift());
+
 		try{		
 			sourceBuffer.appendBuffer(chunk);
 		}catch(e){
-			//console.log('numero de bloque: '+numblock);	
 			console.log(e);	
 		}
 		first=false;
@@ -79,16 +76,14 @@ function handleChunk(chunk,numblock){
 }
 
 function callback(e) {
-
+  
   sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vorbis,vp8"');
   
   sourceBuffer.addEventListener('updateend', function() {
 	  if (/*queue.length*/queue[current]!=undefined) {
  		//Sent to player (consume stream of the queue)
 		//console.log('sent to player')
-	  	//var chunk=new Uint8Array(queue.shift());
-		var chunk=new Uint8Array(queue[current]);
-		current=current+1
+	  	var chunk=new Uint8Array(queue.shift());
 		sourceBuffer.appendBuffer(chunk); 
 	 }else{
 		first=true;
@@ -110,10 +105,9 @@ function callback(e) {
 	{
 	  	//If it is a chunk of video
 		//console.log("received a video chunk");
-		var block=new Uint16Array(evt.data);
 		sendChatMessage(evt.data);
-		handleChunk((evt.data).slice(2),block[0]);
-		//handleChunk(evt.data)
+		handleChunk(evt.data);
+
 	}
 
   }
@@ -130,20 +124,18 @@ mediaSource.addEventListener('webkitsourceended', function(e) {
 
 
 // ----------------- WebRTC Part --------------------
+//
 var isInitiator=false;
 iniConnection.onclick=function(e){
-	for (i=0;i<idpeer;i++){	
-		start(true,i);
-	}
-	isInitiator=true;
+	var i=document.getElementById("code").value;
+	start(true,peerlist[i]);
+	iniConnection.disabled=true;
 };
 
-btnHello.onclick=sendChatMessage;
 
-// call start(true) to initiate
+// call start(true,i) to initiate
 function start(isInitiator,i) {
-     //iniConnection.disabled=true;
-	
+	console.log("creado para: "+i);
 	pcs[i] = new webkitRTCPeerConnection(configuration, {optional: []});
 	
 
@@ -182,30 +174,34 @@ function localDescCreated(desc,pc,i) {
     }, logError);
 }
 
-
+signalingChannel.onmessage = function (evt) {
+	handleMessage(evt);
+}
 
 function handleMessage(evt){
-    var message = JSON.parse(evt.data);
+	var message = JSON.parse(evt.data);
 	
-    if (message.numpeer){    
-		idpeer=message.numpeer-1;
+	if (message.numpeer){    
+		idpeer=message.numpeer;
 		console.log('Peer ID: '+idpeer);
-		document.getElementById("receive").innerHTML+="Peer ID: "+idpeer;
 		return;  	
-    }  
+	}  
+
    
     var id=(message.idtransmitter).split('"').join(''); 
-    var idreceiver=(message.idreceiver).split('"').join(''); 
+	var idreceiver=(message.idreceiver).split('"').join(''); 
     console.log("Received from: "+id+" and send to: "+idreceiver);
 
     if (!pcs[id]) { 
 		console.log('%cCreate a new PeerConection','background: #222; color: #bada55');
+		peerlist.push(id);
+		console.log("PEER LIST UPDATE: "+peerlist);
 		start(false,id);
     } 	
 
     if (message.sdp && idreceiver==idpeer){
         //console.log(message.sdp);   
-	pcs[id].setRemoteDescription(new RTCSessionDescription(message.sdp), function () {
+		pcs[id].setRemoteDescription(new RTCSessionDescription(message.sdp), function () {
 		console.log("remoteDescription is Set");
     		// if we received an offer, we need to answer
 		if (pcs[id].remoteDescription.type == "offer"){
@@ -224,29 +220,72 @@ function handleMessage(evt){
 
 function setupChat(i) {
     channel[i].onopen = function () {
-        btnHello.disabled=false;
-	if (isInitiator)	
-		signalingChannel.send(JSON.stringify({ "fire":"fire" , "idtransmitter":'"'+idpeer+'"', "idreceiver":'"'+i+'"'}));
+    btnSend.disabled=false;
     };
 
     channel[i].onmessage = function (evt) {
-	var block=new Uint16Array(evt.data);
-	//console.log('llegada de bloque desde peer: '+block[0]);
-	handleChunk((evt.data).slice(2),block[0]);
-
-       //document.getElementById("receive").innerHTML+="<br />"+evt.data;
+       handleChunk(evt.data);
     };
 }
 
-function sendChatMessage(msg) {
-    //document.getElementById("receive").innerHTML+="<br />"+msg.value;
-	for (i=0;i<channel.length;i++){  
-		if (i!=idpeer){
-			//console.log("send to "+i);  
-			channel[i].send(msg);
+function sendChatMessage(chunk) {
+	for (i in peerlist){  
+		if (peerlist[i]!=idpeer){
+			console.log("send to "+peerlist[i]);  
+			try{
+				channel[peerlist[i]].send(chunk);
+			}catch(e){
+				console.log(i+" said bye!");
+			}
+
 		}
 	}
 }
+
+//----------------- File Load Part --------------------
+//http://www.html5rocks.com/es/tutorials/file/dndfiles
+
+function readBlob(time) {
+
+    var files = document.getElementById('files').files;
+    if (!files.length) {
+      alert('Please select a file!');
+      return;
+    }
+
+    var file = files[0];
+    var start = time;
+    var stop = file.size - 1;
+
+    var reader = new FileReader();
+
+    // If we use onloadend, we need to check the readyState.
+    reader.onloadend = function(evt) {
+	  
+      if (evt.target.readyState == FileReader.DONE) { // DONE == 2
+        document.getElementById('byte_content').textContent = evt.target.result;
+        document.getElementById('byte_range').textContent = 
+            ['Read bytes: ', start + 1, ' - ', stop + 1,
+             ' of ', file.size, ' byte file'].join('');
+			handleChunk(evt.target.result);
+			
+      }
+    };
+    var blob;
+
+	blob = file.slice(start, start + 256)
+	reader.readAsArrayBuffer(blob);
+	
+    
+  }
+
+  document.querySelector('.readBytesButtons').addEventListener('click', function(evt) {
+    if (evt.target.tagName.toLowerCase() == 'button') {
+      	readBlob(temp);
+		temp+=256;
+		
+    }
+  }, false);
 
 function logError(error) {
     console.log(error.name + ": " + error.message);

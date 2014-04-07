@@ -4,7 +4,7 @@
 '''
 GNU GENERAL PUBLIC LICENSE
 
-This is an example of a signaling server+P2P video streaming over WebRTC.
+This is an example of a signaling server for a WebRTC App with two peer.
 
 Copyright (C) 2014 Cristóbal Medina López.
 		   Vicente Gonzalez Ruiz
@@ -28,31 +28,6 @@ import socket, threading, time, base64, hashlib, struct, binascii
 import simplejson as json
 from SimpleWebSocketServer import WebSocket, SimpleWebSocketServer
 
-def nextChunk(file):
-	global numblock
-	try:
-		chunk = file.read(1024)
-		numblock=numblock+1
-	except Exception as n:
-		print "Unknow error in nextChunk: "+n
-		chunk = None
-		file.close()
-
-	return chunk
-
-def feedCluster(file,client):
-	global numblock
-
-	chunk=nextChunk(file)
-	while chunk is not None:
-		message=struct.pack("H1024s", numblock, chunk)
-		client.sendMessage(buffer(message))
-		chunk=nextChunk(file)
-		#If you send too fast the client crashes
-		time.sleep(0.01)
-
-	file.close()
-
 class Signaling(WebSocket):
 
 	def handleMessage(self):
@@ -64,74 +39,34 @@ class Signaling(WebSocket):
 		except (ValueError, KeyError, TypeError):
 		    print "JSON format error"
 
-		if 'fire' in decoded:
-			threading.Thread(target=feedCluster, args=(file,self)).start()
+		if 'sdp' OR 'candidate' in decoded:
+			try:
+				peeridlist[decoded['idreceiver']].sendMessage(str(self.data))
+			except Exception as n:
+				print n
 
-		if 'sdp' in decoded:		
-			if decoded['sdp']['type'] == 'offer':
-				print 'Offer'
-			else:
-				print 'Answer'
-
-		if 'candidate' in decoded:
-			print 'Candidate num: '+decoded['idtransmitter']
-
-		for client in self.server.connections.itervalues():
-			if client != self:
-				try:
-					client.sendMessage(str(self.data))
-				except Exception as n:
-					print n
 
 
 	def handleConnected(self):
-		global file
-		global header
-
+		global nextid
+		global peeridlist={}
 		print self.address, 'connected'
-		'''
-		if (file is not None):
-			file=open("test.webm","rb")
-			print 'file opened'
-			try:
-				header = file.read(1024)
-				#print 'header is: '+str(header)
-			except Exception as n:
-				print 'I cannot get the header: '+n
-		'''
+		
 		try:
-			self.sendMessage(str('{"numpeer":"'+str(len(self.server.connections))+'"}'))
-			message=struct.pack("H1024s", 0, header)
-			self.sendMessage(buffer(message))
+			self.sendMessage(str('{"numpeer":"'+str(nextid)+'"}'))
+			peeridlist[nextid]=self
+			nextid=nextid+1
 		except Exception as n:
 			print "Unknow error: "+n
 		
 
 	def handleClose(self):
-		global file
-
-		if (len(self.server.connections)==0):
-			file.close()		
-			print 'the file is closed'
-
-		print self.address, 'closed'
-		'''for client in self.server.connections.itervalues():
-			if client != self:
-				try:
-					client.sendMessage(str(self.address[0]) + ' - disconnected')
-				except Exception as n:
-					print n '''       
+		global peeridlist
+		peeridlist.remove(peeridlist.index(self));     
 
 if __name__ == '__main__':
-	numblock=0
-	file=open("test.webm","rb")
-	print 'file opened'
-	try:
-		header = file.read(1024)
-		#print 'header is: '+str(header)
-	except Exception as n:
-		print 'I cannot get the header: '+n
-
+	nextid = 0
+	peeridlist={}
 	server = SimpleWebSocketServer('', 9876, Signaling)
 	server.serveforever()
 	

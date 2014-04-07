@@ -60,7 +60,7 @@ class Signaling(WebSocket):
 			self.sendMessage(str('{"numpeer":"'+str(nextid)+'"}'))
 			self.sendMessage(str('{"peerlist":"'+str(peerlist)+'"}'))
 			peerlist.append(nextid)
-			peeridlist[self]=nextid
+			peeridlist[nextid]=self
 			nextid=nextid+1
 		except Exception as n:
 			print n

@@ -49,6 +49,7 @@ class SimpleEcho(WebSocket):
             print self.address, 'connected'
 	  
 	    '''
+	    #This part is not working. MediaSource do not works without a full file.
 	    source_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	    GET_message = 'GET ' + "/consume/first" + ' HTTP/1.1\r\n'
 	    GET_message += '\r\n'
@@ -60,24 +61,28 @@ class SimpleEcho(WebSocket):
  	    
 	    chunk = receive_next_chunk(source_socket, 59)
 	    print chunk
-	    chunk = receive_next_chunk(source_socket, 1024)
+	    chunk = receive_next_chunk(source_socket, 512)
             while True:
 	    	self.sendMessage(buffer(chunk))
-		chunk = receive_next_chunk(source_socket, 1024)
-		time.sleep(0.01)
+		chunk = receive_next_chunk(source_socket, 512)
+		#time.sleep(0.01)
 
 	    '''
+
 	    file=open("test.webm","rb")
 	    try:
-	   	chunk = file.read(1024)
+	   	chunk = file.read(256)
+
 		while chunk:
 			self.sendMessage(buffer(chunk))
-			chunk = file.read(1024)
+			chunk = file.read(256)
 			#If you send too fast the client crashes
-			#time.sleep(0.01)
+			time.sleep(0.001)
+
+		
 	    finally:
 	   	file.close()
- 	    
+ 	   
         def handleClose(self):
             print self.address, 'closed'         
 
