@@ -31,25 +31,25 @@ from SimpleWebSocketServer import WebSocket, SimpleWebSocketServer
 class Signaling(WebSocket):
 
 	def handleMessage(self):
-		global file
+		global peeridlist
 
 		datos=str(self.data)
 		try:
 		    decoded = json.loads(datos)
 		except (ValueError, KeyError, TypeError):
 		    print "JSON format error"
-
-		if 'sdp' OR 'candidate' in decoded:
+		
+		if 'sdp' or 'candidate' in decoded:
 			try:
-				peeridlist[decoded['idreceiver']].sendMessage(str(self.data))
+				peeridlist[int(decoded['idreceiver'].replace('"',''))].sendMessage(str(self.data))		
 			except Exception as n:
-				print n
-
+				print "Unknow error: "+n		
+				 
 
 
 	def handleConnected(self):
 		global nextid
-		global peeridlist={}
+		global peeridlist
 		print self.address, 'connected'
 		
 		try:
