@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-var signalingChannel = new WebSocket("ws://127.0.0.1:9876/");
+var signalingChannel = new WebSocket("ws://192.168.1.10:9876/");
 signalingChannel.binaryType = "arraybuffer";
 var configuration = {iceServers: [{ url: 'stun:stun.l.google.com:19302' }]};
 //var configuration = {iceServers: [{ url: 'stun:150.214.150.137:3478' }]};
@@ -54,7 +54,13 @@ video.src = window.URL.createObjectURL(mediaSource);
 
 function handleChunk(chunk){
 	queue.push(chunk);
-	if (queue.length==32 && current==0){ video.src = window.URL.createObjectURL(mediaSource); current=1;}
+	//queue[current]=chunk;
+	current++;
+	document.getElementById('byte_range').textContent = current;
+	if (current==1){
+		video.src = window.URL.createObjectURL(mediaSource);
+	}
+	appendNextMediaSegment(mediaSource);
 }
 
 function onSourceOpen(videoTag, e) {
@@ -68,7 +74,7 @@ function onSourceOpen(videoTag, e) {
     var sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vorbis,vp8"');
 
     videoTag.addEventListener('seeking', onSeeking.bind(videoTag, mediaSource));
-    videoTag.addEventListener('progress', onProgress.bind(videoTag, mediaSource));
+    //videoTag.addEventListener('progress', onProgress.bind(videoTag, mediaSource));
 
     var initSegment = new Uint8Array(queue.shift());//GetInitializationSegment();
 
@@ -90,7 +96,7 @@ function onSourceOpen(videoTag, e) {
     };
 
     sourceBuffer.addEventListener('updateend', firstAppendHandler);
-	sourceBuffer.addEventListener('update', updateOK.bind(videoTag, mediaSource));
+	//sourceBuffer.addEventListener('update', updateOK.bind(videoTag, mediaSource));
 	console.log("Send init block");
     sourceBuffer.appendBuffer(initSegment);
 	console.log('mediaSource readyState: ' + mediaSource.readyState);
@@ -114,18 +120,20 @@ function appendNextMediaSegment(mediaSource) {
 
     // Make sure the previous append is not still pending.
     if (mediaSource.sourceBuffers[0].updating){
-		console.log("SourceBuffer is updating");    
+	    //console.log("SourceBuffer is updating");    
 	    return;
 	}
 
-    var mediaSegment = new Uint8Array(queue.shift());//GetNextMediaSegment();
 
-    if (mediaSegment.length==0) {
+    if (queue.length==0) {
       // Error fetching the next media segment.
-	  console.log("mediaSegment is null");
+
+	console.log("mediaSegment is null need buffering");
       //mediaSource.endOfStream("network");
       return;
     }
+	
+    var mediaSegment = new Uint8Array(queue.shift());//GetNextMediaSegment();
 
     // NOTE: If mediaSource.readyState == “ended”, this appendBuffer() call will
     // cause mediaSource.readyState to transition to "open". The web application
@@ -259,7 +267,7 @@ function setupChat(i) {
     };
 
     channel[i].onmessage = function (evt) {
-	   console.log("block received");
+       //console.log("block received");
        handleChunk(evt.data);
     };
 }
@@ -300,7 +308,7 @@ function readBlob(time) {
     reader.onloadend = function(evt) {
 	  
       if (evt.target.readyState == FileReader.DONE) { // DONE == 2
-		//handleChunk(evt.target.result);
+		handleChunk(evt.target.result);
 		sendChatMessage(evt.target.result);
         document.getElementById('byte_content').textContent = evt.target.result;
         document.getElementById('byte_range').textContent = (start+1)/1024;
@@ -325,7 +333,6 @@ function readBlob(time) {
     if (evt.target.tagName.toLowerCase() == 'button') {
 		//setInterval('feedIt()',20);   
 		feedIt();
-		 video.src = window.URL.createObjectURL(mediaSource);
     }
   }, false);
 
