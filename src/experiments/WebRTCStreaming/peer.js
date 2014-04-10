@@ -32,9 +32,9 @@ var iniConnection = document.getElementById("initiateConnection");
 var icecandidates = document.getElementById("candidateices");
 var msg = document.getElementById("msg");
 var creator=document.getElementById("creator");
-var btnHello= document.getElementById("sayHello");
+var btnStream= document.getElementById("streamit");
 var temp=0;
-btnHello.disabled=true;
+btnStream.disabled=true;
 
 // ---------------- Streaming Video Part ----------------
 
@@ -54,13 +54,22 @@ video.src = window.URL.createObjectURL(mediaSource);
 
 function handleChunk(chunk){
 	queue.push(chunk);
-	//queue[current]=chunk;
 	current++;
-	document.getElementById('byte_range').textContent = current;
+	document.getElementById('byte_range').textContent = "send/received: "+current;
 	if (current==1){
 		video.src = window.URL.createObjectURL(mediaSource);
+		video.pause();
 	}
-	appendNextMediaSegment(mediaSource);
+	
+	if (current>=128){ //Size to start using
+		appendNextMediaSegment(mediaSource);
+	}
+
+	if (current==128){//Buffer size to play
+		video.play();			
+	}
+		
+
 }
 
 function onSourceOpen(videoTag, e) {
@@ -68,12 +77,12 @@ function onSourceOpen(videoTag, e) {
 
     if (mediaSource.sourceBuffers.length > 0){
 		console.log("SourceBuffer.length > 0");
-        return;
+       		return;
 	}
 
     var sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vorbis,vp8"');
 
-    videoTag.addEventListener('seeking', onSeeking.bind(videoTag, mediaSource));
+    //videoTag.addEventListener('seeking', onSeeking.bind(videoTag, mediaSource));
     //videoTag.addEventListener('progress', onProgress.bind(videoTag, mediaSource));
 
     var initSegment = new Uint8Array(queue.shift());//GetInitializationSegment();
@@ -96,16 +105,13 @@ function onSourceOpen(videoTag, e) {
     };
 
     sourceBuffer.addEventListener('updateend', firstAppendHandler);
-	//sourceBuffer.addEventListener('update', updateOK.bind(videoTag, mediaSource));
+    sourceBuffer.addEventListener('update', onProgress.bind(videoTag, mediaSource));
 	console.log("Send init block");
     sourceBuffer.appendBuffer(initSegment);
 	console.log('mediaSource readyState: ' + mediaSource.readyState);
 
   }
-function updateOK(mediaSource, e){
-	appendNextMediaSegment(mediaSource);
-	mediaSource.sourceBuffers[0].removeEventListener('update', updateOK.bind(e.target, mediaSource));
-}
+
 function appendNextMediaSegment(mediaSource) {
     if (mediaSource.readyState == "closed"){
 	  console.log("readyState is closed");    
@@ -127,7 +133,6 @@ function appendNextMediaSegment(mediaSource) {
 
     if (queue.length==0) {
       // Error fetching the next media segment.
-
 	console.log("mediaSegment is null need buffering");
       //mediaSource.endOfStream("network");
       return;
@@ -159,8 +164,8 @@ function onSeeking(mediaSource,e) {
 	//appendNextMediaSegment(mediaSource);
  }
 function onProgress(mediaSource,e) {
-	//console.log("on Progress");
-    appendNextMediaSegment(mediaSource);
+     //console.log("on Progress");
+     appendNextMediaSegment(mediaSource);
 }
 
 
@@ -263,7 +268,7 @@ function handleMessage(evt){
 
 function setupChat(i) {
     channel[i].onopen = function () {
-    btnHello.disabled=false;
+    	btnStream.disabled=false;
     };
 
     channel[i].onmessage = function (evt) {
@@ -306,26 +311,27 @@ function readBlob(time) {
 	
     // If we use onloadend, we need to check the readyState.
     reader.onloadend = function(evt) {
-	  
+
       if (evt.target.readyState == FileReader.DONE) { // DONE == 2
-		handleChunk(evt.target.result);
-		sendChatMessage(evt.target.result);
-        document.getElementById('byte_content').textContent = evt.target.result;
-        document.getElementById('byte_range').textContent = (start+1)/1024;
+	handleChunk(evt.target.result);
+	sendChatMessage(evt.target.result);
+        //document.getElementById('byte_content').textContent = evt.target.result;
+        //document.getElementById('byte_range').textContent = (start+1)/1024;
 			
 			
       }
-    };
+     };
 	
-    var blob;
+	reader.onload = function(e) {
+		feedIt();
+		//console.log('appending chunk:' + temp);
+	};
+    	
+	var blob;
 	blob = file.slice(start, start + 1024)
 	reader.readAsArrayBuffer(blob);
 	
-	reader.onload = function(e) {
-        feedIt();
-        //console.log('appending chunk:' + temp);
-        
-    };
+	
     
   }
 
