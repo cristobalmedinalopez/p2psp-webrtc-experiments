@@ -1,29 +1,91 @@
 <!DOCTYPE html>
+<!--
+
+  This is an example of a video streaming system, it includes sender, receiver and player. 
+  It works over WebRTC.
+
+  Copyright (C) 2014 Cristóbal Medina López.
+		     Vicente González Ruiz.
+
+  GNU/GPL v3 or later http://www.gnu.org/licenses/gpl-3.0.html
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+ -->
 <html>
 <head>
-<meta name="author" content="Cristóbal Medina López and Vicente Gonzalez Ruiz" />
-<title>WebRTC Peer Example</title>
+<meta name="author" content="Cristóbal Medina López and Vicente González Ruiz" />
+<link href="style.css" rel="stylesheet" type="text/css">
+<title>Video Streaming System over WebRTC</title>
 </head>
 <body>
-  <video controls autoplay id="player"></video>
+
 <div>
-  <div>
-
-
-    <br />
-    <input id="msg" type="text" name="msg"> 
-    <button id="initiateConnection">Initiate Connection</button>
+  <div id="header" class="super">
+	<img style="float: left;" src="imgs/p2psp.png" />
+    <div class="title">
+	<b>Experiments</b> <br />Video Streaming System over WebRTC <br />
+	<span style="font-size:medium;"><a style="text-decoration:none;color:#FFF;" href="http://bazaar.launchpad.net/~p2psp/p2psp/webrtc/files/81/src/experiments/WebRTCStreaming/" >Get source code! </a></span>
+     </div>
   </div>
 
-  <input type="file" id="files" name="file" /> Read bytes: 
-<span class="readBytesButtons">
-  <button id="streamit">Stream it!</button>
-</span>
-<div id="byte_range"></div>
-<div id="byte_content"></div>
-<div id="byte_received"></div>
+  <div id="panel">
+	<div id="choose">
+		Does this will act as 
+		<button id="btnSender">Sender</button>
+		OR
+		<button id="btnReceiver">Receiver</button>
+		?
+	</div>
+	<div id="receiver" class="receiver">
+		Receive stream from (Peer ID):
+		<input id="msg" type="text" name="msg">
+		<button id="initiateConnection">Enter</button>
+	</div>
 
-  <script src="peer.js"></script>
+	<div id="sender" class="sender">
+		Select a video file to transmit:
+		<input type="file" id="files" name="file" />
+		<span class="readBytesButtons">
+			<button id="streamit">Stream it!</button>
+        </span><br />
+		Use this code to connect: <spam id="PeerID" style="color:red;"></spam>
+	</div>
+	  
+  </div>
+
+  <center><span id="warning" class="warning">Remember first is necessary to connect the receivers to the sender. After, select a video file (WebM) and press "Stream it!"</span></center>
+
+  <br />
+   <center>
+   <div>
+		<video controls autoplay id="player" width="60%" height="60%"></video>
+		<div id="byte_range"></div>
+		<div id="byte_content"></div>
+   </div>
+   
+	
+	<div class="info">
+	This experiment allow transmit a WebM* video file directly to others browsers like a stream via WebRTC DataChannel, i.e., the video streaming is not passing through a server, it's a browser-to-browser connection.
+<br /><br />
+Happy Streaming ;-)
+<br /><br />
+*Some videos may not work due to encoding. You can try it with these:
+<br /><a href="https://stream-m.googlecode.com/files/univac.webm">Example 1: univac</a>
+<br /><a href="https://dl.dropboxusercontent.com/u/66662148/bigbuckbunny.webm">Example 2: Big buck bunny</a>
+	</div>
+	</center>
+  	<script src="peer.js"></script>
 </div>
 </body>
 </html>

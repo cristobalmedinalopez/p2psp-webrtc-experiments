@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-var signalingChannel = new WebSocket("ws://192.168.1.10:9876/");
+var signalingChannel = new WebSocket("ws://192.168.1.41:9876/"); //server.py IP
 signalingChannel.binaryType = "arraybuffer";
 var configuration = {iceServers: [{ url: 'stun:stun.l.google.com:19302' }]};
 //var configuration = {iceServers: [{ url: 'stun:150.214.150.137:3478' }]};
@@ -29,6 +29,8 @@ var channel=[];
 var idpeer=0;
 var peerlist=[];
 var iniConnection = document.getElementById("initiateConnection");
+var sender = document.getElementById("btnSender");
+var receiver = document.getElementById("btnReceiver");
 var icecandidates = document.getElementById("candidateices");
 var msg = document.getElementById("msg");
 var creator=document.getElementById("creator");
@@ -40,7 +42,7 @@ btnStream.disabled=true;
 
 window.MediaSource = window.MediaSource || window.WebKitMediaSource;
 if (!!!window.MediaSource) {
-  alert('MediaSource API is not available');
+  alert('MediaSource API is not available :_(\nThis experiment only works in Chrome.');
 }
 
 var queue=[];
@@ -233,6 +235,7 @@ function handleMessage(evt){
 	if (message.numpeer){    
 		idpeer=message.numpeer;
 		console.log('Peer ID: '+idpeer);
+		document.getElementById('PeerID').textContent = idpeer;
 		return;  	
 	}  
 
@@ -346,6 +349,17 @@ function feedIt(){
 	readBlob(temp);
 	temp+=1024;
 }
+
+sender.onclick=function(e){
+	document.getElementById("choose").style.display="none";
+	document.getElementById("sender").style.display="inline";
+	document.getElementById("warning").style.display="inline";
+};
+
+receiver.onclick=function(e){
+	document.getElementById("choose").style.display="none";
+	document.getElementById("receiver").style.display="inline";
+};
 
 function logError(error) {
     console.log(error.name + ": " + error.message);
