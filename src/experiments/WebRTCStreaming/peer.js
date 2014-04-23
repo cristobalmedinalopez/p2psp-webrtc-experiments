@@ -1,7 +1,7 @@
 /*
 GNU GENERAL PUBLIC LICENSE
 
-This is an example of a client-side for a multi-party chat over WebRTC.
+This is an example of a client-side for a Video Streaming System over WebRTC.
 
 Copyright (C) 2014 Cristóbal Medina López.
 http://www.p2psp.org
@@ -63,7 +63,7 @@ function handleChunk(chunk){
 		video.pause();
 	}
 	
-	if (current>=2){ //Size to start using
+	if (current>=2){ //Size to start feeding Media Source
 		appendNextMediaSegment(mediaSource);
 	}
 
