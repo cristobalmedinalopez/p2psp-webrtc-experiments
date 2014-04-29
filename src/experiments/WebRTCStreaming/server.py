@@ -4,7 +4,7 @@
 '''
 GNU GENERAL PUBLIC LICENSE
 
-This is an example of a signaling server for a WebRTC App with two peer.
+This is an example of a signaling server for a WebRTC App with several peers.
 
 Copyright (C) 2014 Cristóbal Medina López.
 		   Vicente Gonzalez Ruiz
