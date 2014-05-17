@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="author" content="Cristóbal Medina López and Vicente Gonzalez Ruiz" />
+<link href="style.css" rel="stylesheet" type="text/css">
+<title>WebRTC Peer Example</title>
+<style>
+.oculto {display:none;}
+</style>
+</head>
+<body>
+<div>
+  <div id="header" class="super">
+	<img style="float: left;" src="imgs/p2psp.png" />
+    <div class="title">
+	<b>Experiments</b> <br />P2PSP - WebRTC <br />
+	<span style="font-size:medium;"><a style="text-decoration:none;color:#FFF;" href="http://bazaar.launchpad.net/~p2psp/p2psp/webrtc/files/head:/src/experiments/WebRTCP2PStreaming/" >Get source code! </a></span>
+     </div>
+  </div><br />
+   <center>
+  <video controls autoplay id="player" width="80%" height="80%"></video>
+ </center>
+<div>
+  <div>
+    <button id="initiateConnection">Initiate Connection</button>
+  </div>
+
+  Received Messages:
+  <div id="receive">
+  
+  </div>
+
+  <script src="peer.js"></script>
+</div>
+</body>
+</html>
