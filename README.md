@@ -1,18 +1,15 @@
-Welcome to the Peer-to-Peer Straightforward Protocol (P2PSP) Project!
+# P2PSP WebRTC experiments
 
-The P2PSP is a protocol for the streaming of real-time video/audio
-sequences on peer-to-Peer (P2P) networks. In this repository you can
-find an inmplementation of the P2PSP.
+A set of WebRTC experiments in order to test whether an implementation of the P2PSP protocol is feasible on the web browser without plugins.
 
-This is a description of the files/directories:
+The experimets include:
 
-* readme.txt: this file.
+- A multiparty chat (src/experiments/WebRTCMultiPeerChat) available at http://p2psp.org/chat/
+- Client-Server Streaming via WebSocket (src/experiments/WebSocketStreaming) 
+- Streaming among browsers via WebRTC (src/experiments/WebRTCStreaming) available at http://p2psp.org/webrtc-streaming/
 
-* src: the implementation and some useful scripts.
-
-More information at:
+More information about P2PSP at:
 
 http://www.p2psp.org
 
-Thanks for downloading the P2PSP and happy broadcasting!
-The P2PSP team.
+**Thanks for downloading the P2PSP and happy broadcasting!**
