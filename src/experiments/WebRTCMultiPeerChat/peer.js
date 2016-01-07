@@ -46,7 +46,7 @@ btnSend.onclick=sendChatMessage;
 function start(isInitiator,i) {
      //iniConnection.disabled=true;
 	console.log("creado para: "+i);
-	pcs[i] = new webkitRTCPeerConnection(configuration, {optional: [{RtpDataChannels: true}]});
+	pcs[i] = new webkitRTCPeerConnection(configuration, {optional: []});
 	
 
 	// send any ice candidates to the other peer
