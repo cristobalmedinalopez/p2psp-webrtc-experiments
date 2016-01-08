@@ -82,8 +82,8 @@ function onSourceOpen(videoTag, e) {
        		return;
 	}
 
-    var sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vorbis,vp8"');
-
+    //var sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vorbis,vp8"');
+    var sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.42E01E, mp4a.40.2"');
     //videoTag.addEventListener('seeking', onSeeking.bind(videoTag, mediaSource));
     //videoTag.addEventListener('progress', onProgress.bind(videoTag, mediaSource));
 
@@ -135,7 +135,7 @@ function appendNextMediaSegment(mediaSource) {
 
     if (queue.length==0) {
       // Error fetching the next media segment.
-	console.log("mediaSegment is null need buffering");
+	//console.log("mediaSegment is null need buffering");
       //mediaSource.endOfStream("network");
       return;
     }
