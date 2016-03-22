@@ -1,5 +1,7 @@
-##Instructions 
+## Demo
+[http://www.p2psp.org/webrtc-streaming/](http://www.p2psp.org/webrtc-streaming/)
 
+##Instructions 
 
 1. Run server
     ```sh
