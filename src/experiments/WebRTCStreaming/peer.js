@@ -55,7 +55,6 @@ if (!!!window.RTCPeerConnection || !!!window.RTCIceCandidate || !!!window.RTCSes
 var queue=[];
 var sourceBuffer;
 var current=0;
-var buffering;
 var video = document.getElementById("player");
 var mediaSource = new MediaSource;
 video.src = URL.createObjectURL(mediaSource);
@@ -310,12 +309,6 @@ function readBlob(time) {
 		setInterval('feedIt()', 50);   
     }
   }, false);
-
-function buffering(){
-	for (i=0; i < 1; i++){
-		feedIt();
-	}
-}
 
 function feedIt(){
 	readBlob(temp);
