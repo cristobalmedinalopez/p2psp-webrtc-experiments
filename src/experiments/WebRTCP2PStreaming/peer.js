@@ -1,7 +1,7 @@
 /*
 GNU GENERAL PUBLIC LICENSE
 
-This is an example of a client-side for a Video Streaming System over WebRTC.
+This is an example of a client-side for a multi-party chat over WebRTC.
 
 Copyright (C) 2014 Cristóbal Medina López.
 http://www.p2psp.org
@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-var signalingChannel = new WebSocket("ws://127.0.0.1:9876/"); // <-- Your server.py IP:PORT here
+var signalingChannel = new WebSocket("ws://150.214.150.68:4561/"); //server.py IP
 signalingChannel.binaryType = "arraybuffer";
 var configuration = {iceServers: [{ url: 'stun:stun.l.google.com:19302' }]};
 //var configuration = {iceServers: [{ url: 'stun:150.214.150.137:3478' }]};
@@ -28,200 +28,158 @@ var pcs=[];
 var channel=[];
 var idpeer=0;
 var peerlist=[];
+var peer_index = 0;
 var iniConnection = document.getElementById("initiateConnection");
 var sender = document.getElementById("btnSender");
 var receiver = document.getElementById("btnReceiver");
 var icecandidates = document.getElementById("candidateices");
-var msg = document.getElementById("msg");
 var creator=document.getElementById("creator");
 var btnStream= document.getElementById("streamit");
 var temp=0;
-//btnStream.disabled=true;
+var splitter = 0;
+btnStream.disabled=true;
 
 // ---------------- Streaming Video Part ----------------
 
 window.MediaSource = window.MediaSource || window.WebKitMediaSource;
 if (!!!window.MediaSource) {
-  alert('MediaSource API is not available :_(\nThis experiment only works in Chrome.');
+  alert('MediaSource API is not available :_(');
 }
 
-var queue=[];
-var sourceBuffer;
-var current=0;
-var received=0;
-var once=true;
-var video = document.getElementById("player");
-var mediaSource = new MediaSource();
-var buffer_size=512;
-mediaSource.addEventListener('sourceopen', onSourceOpen.bind(this, video));
-//video.src = window.URL.createObjectURL(mediaSource);
+window.RTCPeerConnection = window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+window.RTCIceCandidate = window.RTCIceCandidate || window.mozRTCIceCandidate;
+window.RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription;
+if (!!!window.RTCPeerConnection || !!!window.RTCIceCandidate || !!!window.RTCSessionDescription) {
+  alert('WebRTC API is not available :_(');
+}
 
-function handleChunk(chunk, numblock){
-	//queue.push(chunk);
+var sourceBuffer;
+var buffer_size = 256;
+var chunk_to_play = 0;
+var queue = new Array(buffer_size);
+var current = 0;
+var video = document.getElementById("player");
+var mediaSource = new MediaSource;
+video.src = URL.createObjectURL(mediaSource);
+mediaSource.addEventListener('sourceopen', onSourceOpen);
+
+
+function handleChunk(chunk, number_of_chunk){
+	console.log(number_of_chunk);
 	
-	queue[numblock%buffer_size]=chunk;
-	//received=(received+1)%buffer_size;
-	//console.log(numblock%buffer_size);
-	//document.getElementById('byte_range').textContent = "send/received: "+current;
-	if (once==true){
-		console.log("video tag set");
+	queue[number_of_chunk%buffer_size] = chunk
+
+	//queue.push(chunk);
+
+	appendChunk();
+	current++;
+	document.getElementById('byte_range').textContent = "send/received: "+current;
+
+	/*
+	if (current==1){
 		video.src = window.URL.createObjectURL(mediaSource);
-		//video.pause();
-		once=false;
+		video.pause();
 	}
 	
-	//if (received>=0){ //Size to start feeding Media Source
+	if (current>=2){ //Size to start using
 		appendNextMediaSegment(mediaSource);
-	//}
+	}
 
-	//if (received==buffer_size){//Buffer size to play
-		//video.play();			
-	//}
+	if (current==1){//Buffer size to play
+		console.log("play");
+		video.play();			
+	}
+	*/
 		
 
 }
 
-function onSourceOpen(videoTag, e) {
-    var mediaSource = e.target;
+var sourceBuffer = null;
+function onSourceOpen() {
 
-    if (mediaSource.sourceBuffers.length > 0){
-		console.log("SourceBuffer.length > 0");
-       		return;
-	}
-
-    var sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vorbis,vp8"');
+    sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.42E01E, mp4a.40.2"');
 
     //videoTag.addEventListener('seeking', onSeeking.bind(videoTag, mediaSource));
-    videoTag.addEventListener('progress', onProgress.bind(videoTag, mediaSource));
+    //videoTag.addEventListener('progress', onProgress.bind(videoTag, mediaSource));
 
-    //var initSegment = new Uint8Array(queue[current]);//queue.shift());//GetInitializationSegment();
-    var initSegment = new Uint8Array((queue[current]).slice(2));
-
-    if (initSegment.length==0) {
-      // Error fetching the initialization segment. Signal end of stream with an error.
-	  console.log("initSegment is null");
-      mediaSource.endOfStream("network");
-      return;
-    }
-
-    // Append the initialization segment.
-    var firstAppendHandler = function(e) {
-	  console.log("First Append Handler");
-      var sourceBuffer = e.target;
-      sourceBuffer.removeEventListener('updateend', firstAppendHandler);
-
-      // Append some initial media data.
-      appendNextMediaSegment(mediaSource);
-
-    };
-
-    sourceBuffer.addEventListener('updateend', firstAppendHandler);
-    //sourceBuffer.addEventListener('update', onProgress.bind(videoTag, mediaSource));
-	console.log("Send init block");
-    sourceBuffer.appendBuffer(initSegment);
-    current=(current+1)%buffer_size;
-	console.log('mediaSource readyState: ' + mediaSource.readyState);
-
+    //video.addEventListener('timeupdate', checkBuffer);
+    video.addEventListener('canplay', function () {
+            video.play();
+    });
+    video.addEventListener('seeking', seek);
   }
 
-function appendNextMediaSegment(mediaSource) {
-    if (mediaSource.readyState == "closed"){
-	  //console.log("readyState is closed");    
-	  return;
+
+function seek (e) {
+	console.log(e);
+	if (mediaSource.readyState === 'open') {
+	  sourceBuffer.abort();
+	  console.log(mediaSource.readyState);
+	} else {
+	  console.log('seek but not open?');
+	  console.log(mediaSource.readyState);
 	}
-
-    // If we have run out of stream data, then signal end of stream.
-    //if (!HaveMoreMediaSegments()) {
-    //  mediaSource.endOfStream();
-    //  return;
-    //}
-
-    // Make sure the previous append is not still pending.
-    if (mediaSource.sourceBuffers[0].updating){
-	    //console.log("SourceBuffer is updating");    
-	    return;
-	}
-
-
-    if (queue[current]==undefined) {
-      // Error fetching the next media segment.
-	//console.log("Waiting for block number: "+current);
-      //mediaSource.endOfStream("network");
-      return;
-    }
-    
-    //if (current<512) console.log("enviado a mediasource bloque: "+current);	
-    //var mediaSegment = new Uint8Array(queue[current]);//queue.shift());//GetNextMediaSegment();
-    var mediaSegment = new Uint8Array((queue[current]).slice(2));
-    current=(current+1)%buffer_size;
-    // NOTE: If mediaSource.readyState == “ended”, this appendBuffer() call will
-    // cause mediaSource.readyState to transition to "open". The web application
-    // should be prepared to handle multiple “sourceopen” events.
-	//console.log("Send next block");
-    mediaSource.sourceBuffers[0].appendBuffer(mediaSegment);
-
-  }
-function onSeeking(mediaSource,e) {
-    console.log("on Seeking");
-    var video = e.target;
-
-    if (mediaSource.readyState == "open") {
-      // Abort current segment append.
-     // mediaSource.sourceBuffers[0].abort();
-    }
-
-    // Notify the media segment loading code to start fetching data at the
-    // new playback position.
-    //SeekToMediaSegmentAt(video.currentTime);
-
-    // Append a media segment from the new playback position.
-	//appendNextMediaSegment(mediaSource);
- }
-function onProgress(mediaSource,e) {
-     //console.log("on Progress");
-     appendNextMediaSegment(mediaSource);
 }
 
 
+function appendChunk(){
+    if (!sourceBuffer.updating){
+        console.log("chunk sent to the player");
+        chunk = new Uint8Array(queue[chunk_to_play]);
+        sourceBuffer.appendBuffer(chunk);
+	chunk_to_play = (chunk_to_play + 1) % buffer_size;
+    }
+}
+
+/*
+function checkBuffer(){
+	console.log("checking buffer... "+queue.length);
+	for (i = 0; i < (100 - queue.length); i++){
+		feedIt();
+	}
+}
+*/
 
 // ----------------- WebRTC Part --------------------
 //
 var isInitiator=false;
 iniConnection.onclick=function(e){
-	for (i in peerlist){  
-		start(true,peerlist[i]);
-	}
+	var i=document.getElementById("msg").value;
+	splitter = i;
+	start(true,i);
 	iniConnection.disabled=true;
 };
 
-var dataChannelOptions = {
-  ordered: false, // do not guarantee order
-  maxRetransmitTime: 0, // in milliseconds
-};
 
 // call start(true,i) to initiate
 function start(isInitiator,i) {
 	console.log("creado para: "+i);
-	pcs[i] = new webkitRTCPeerConnection(configuration, {optional: []});
+	pcs[i] = new RTCPeerConnection(configuration);
 	
 
 	// send any ice candidates to the other peer
 	pcs[i].onicecandidate = function (evt) {
-		if (evt.candidate){
-			signalingChannel.send(JSON.stringify({ "candidate": evt.candidate , "idtransmitter":'"'+idpeer+'"', "idreceiver":'"'+i+'"'}));
-		}
+		signalingChannel.send(JSON.stringify({ "candidate": evt.candidate , "idtransmitter":'"'+idpeer+'"', "idreceiver":'"'+i+'"'}));
 	};
 
 
 	// let the "negotiationneeded" event trigger offer generation
 	pcs[i].onnegotiationneeded = function () {
-		pcs[i].createOffer(function(desc){localDescCreated(desc,pcs[i],i);});
-		console.log("Create and send OFFER");
-	}
+		pcs[i].createOffer().then(function(offer){
+			return pcs[i].setLocalDescription(offer);
+		})
+		.then(function() {
+			signalingChannel.send(JSON.stringify({ "sdp": pcs[i].localDescription , "idtransmitter":'"'+idpeer+'"', "idreceiver":'"'+i+'"'}));			
+			console.log("Create and send OFFER");
+			
+		})
+		.catch(logError)
+		
+	};
 
 	if (isInitiator) {
 		// create data channel and setup chat
-		channel[i] = pcs[i].createDataChannel("chat"+i, dataChannelOptions);
+		channel[i] = pcs[i].createDataChannel("chat"+i);
 		setupChat(i);
 	} else {
 	// setup chat on incoming data channel
@@ -230,46 +188,13 @@ function start(isInitiator,i) {
 			setupChat(i);
 		};
 	}  
+	peerlist.push(i);
+	console.log("PEER LIST UPDATE: "+peerlist);
 	console.log("Saved in slot: "+i+" PeerConection: "+pcs[i]);
 }
 
-function localDescCreated(desc,pc,i) {
-    pc.setLocalDescription(desc, function () {
-	console.log("localDescription is Set");
-        signalingChannel.send(JSON.stringify({ "sdp": pc.localDescription , "idtransmitter":'"'+idpeer+'"', "idreceiver":'"'+i+'"'}));
-    }, logError);
-}
-
 signalingChannel.onmessage = function (evt) {
-	try
-	{
-	  	var jsonObject = JSON.parse(evt.data);
-	  	//If it is a string for the signaling
-		//console.log("received a string");
-		handleMessage(evt)
-	}
-	catch(e)
-	{
-	  	//If it is a chunk of video
-		//console.log("received a video chunk");
-		
-		var block=new Uint16Array(evt.data);
-		if (block[0]!=undefined){
-			//handleChunk((evt.data).slice(2),block[0]); //extraemos los dos primeros bytes
-			handleChunk(evt.data,block[0]);
-			//if (block[0]<100) console.log('llegada de bloque desde servidor: '+block[0]);
-			sendChatMessage(evt.data);
-			//handleChunk(evt.data)
-		}
-	}
-}
-
-signalingChannel.onclose = function (evt) {
-	for (i=0;i<queue.length;i++){
-		//console.log("Buffer: "+ new Uint16Array(queue[i])[0]);
-	}	
-	
-	//String.fromCharCode.apply(null, new Uint16Array(queue[1]));
+	handleMessage(evt);
 }
 
 function handleMessage(evt){
@@ -278,13 +203,7 @@ function handleMessage(evt){
 	if (message.numpeer){    
 		idpeer=message.numpeer;
 		console.log('Peer ID: '+idpeer);
-		document.getElementById('receive').textContent = "Peer ID: "+ idpeer;
-		return;  	
-	} 
-
-	if (message.peerlist){    
-		peerlist=JSON.parse(message.peerlist);
-		console.log('Lista de Peers: '+peerlist);
+		document.getElementById('PeerID').textContent = idpeer;
 		return;  	
 	}  
 
@@ -295,58 +214,182 @@ function handleMessage(evt){
 
     if (!pcs[id]) { 
 		console.log('%cCreate a new PeerConection','background: #222; color: #bada55');
-		peerlist.push(id);
-		console.log("PEER LIST UPDATE: "+peerlist);
+		
 		start(false,id);
     } 	
 
     if (message.sdp && idreceiver==idpeer){
-        //console.log(message.sdp);   
-		pcs[id].setRemoteDescription(new RTCSessionDescription(message.sdp), function () {
-		console.log("remoteDescription is Set");
-    		// if we received an offer, we need to answer
-		if (pcs[id].remoteDescription.type == "offer"){
-			console.log("Create and send ANSWER");
-        		pcs[id].createAnswer(function(desc){localDescCreated(desc,pcs[id],id);});
-    		}
-        });
-    }
-
-    if (message.candidate && idreceiver==idpeer){
-		console.log("Received ice candidate: "+ message.candidate.candidate); 
-		pcs[id].addIceCandidate(new RTCIceCandidate(message.candidate));
-    }
-
+        console.log(message.sdp);
+		if (message.sdp.type == "offer"){   
+			pcs[id].setRemoteDescription(message.sdp).then(function () {
+				return pcs[id].createAnswer();
+			})
+			.then(function (answer) {
+				return pcs[id].setLocalDescription(answer);
+				console.log("remoteDescription is Set");
+			})
+			.then(function  () {
+				signalingChannel.send(JSON.stringify({ "sdp": pcs[id].localDescription , "idtransmitter":'"'+idpeer+'"', "idreceiver":'"'+id+'"'}));			
+				console.log("Create and send ANSWER");
+			})
+			.catch(logError);
+		}else
+			pcs[id].setRemoteDescription(message.sdp).catch(logError);
+	}else if (message.candidate){
+		console.log(message.candidate)
+		pcs[id].addIceCandidate(message.candidate).catch(logError);
+		console.log("Received ice candidate: "+ message.candidate);
+	}
 }
+
 
 function setupChat(i) {
     channel[i].onopen = function () {
-    	//btnStream.disabled=false;
-	signalingChannel.send(JSON.stringify({ "fire":"fire" , "idtransmitter":'"'+idpeer+'"', "idreceiver":'"'+i+'"'}));
+    	btnStream.disabled=false;
+	if (splitter == 0){
+		sendPeerList(i);
+	}
     };
 
     channel[i].onmessage = function (evt) {
-       //console.log("block received");
-       var block=new Uint16Array(evt.data);
-       //if (block[0]<100) console.log('llegada de bloque desde Peer: '+block[0]);
-       //handleChunk((evt.data).slice(2),block[0]);
-        handleChunk(evt.data,block[0]);
+
+	console.log("msg received from "+i+" : " + evt.data);
+        var msg_stream = evt.data;  
+
+
+	if (typeof msg_stream == "string"){    
+		incoming_peerlist=JSON.parse(msg_stream);
+		array_de_los_huevos = incoming_peerlist.peerlist;
+		console.log(array_de_los_huevos);
+		for (i=0; i<array_de_los_huevos.length; i++){
+			console.log("incoming: "+array_de_los_huevos[i]);
+			if (array_de_los_huevos[i] != idpeer)
+				start(true,array_de_los_huevos[i]);	
+		}
+		return;  	
+    	} 
+     
+
+       handleChunk(msg_stream.slice(2), (new Uint16Array(msg_stream.slice(0,2)))[0]);
+
+       if (i == splitter){
+	     sendChatMessage(chunk);
+	}
+
     };
 }
 
-function sendChatMessage(chunk) {
-	for (i in peerlist){  
-		if (peerlist[i]!=idpeer){
-			//console.log("send to "+peerlist[i]);  
-			try{
-				channel[peerlist[i]].send(chunk);
-			}catch(e){
-				console.log(i+" said bye!");
-			}
-
-		}
+function sendPeerList(peer){
+	console.log("Sending list of peers to: " + peer); 
+	try{
+		channel[peer].send(JSON.stringify({peerlist}));
+	}catch(e){
+		console.log(i+" said bye!");
 	}
 }
+
+function sendChatMessage(chunk) {
+
+	if (peerlist[peer_index] == splitter){
+		console.log("next is the splitter");
+		peer_index = (peer_index + 1) % peerlist.length;
+	}
+
+	if (peerlist[peer_index]!=idpeer && peerlist[peer_index] != splitter){
+		//console.log("send to "+peerlist[i]); 
+		console.log("Sending to peer: " + peerlist[peer_index]); 
+		try{
+			channel[peerlist[peer_index]].send(chunk);
+		}catch(e){
+			console.log(i+" said bye!");
+		}
+
+	}
+	peer_index = (peer_index + 1) % peerlist.length;
+}
+
+//----------------- File Load Part --------------------
+//http://www.html5rocks.com/es/tutorials/file/dndfiles
+
+var number_of_chunk = 0;
+function readBlob(time) {
+	
+    var files = document.getElementById('files').files;
+    if (!files.length) {
+      alert('Please select a file!');
+      return;
+    }
+
+    var file = files[0];
+    var start = time;
+    var stop = file.size - 1;
+	if (time>file.size)
+		return;
+    var reader = new FileReader();
+	
+    // If we use onloadend, we need to check the readyState.
+    reader.onloadend = function(evt) {
+
+      if (evt.target.readyState == FileReader.DONE) { // DONE == 2
+	var chunk = evt.target.result;
+	handleChunk(chunk, number_of_chunk);
+
+
+	var chunk_array = new Uint8Array(chunk);
+	var msg_stream = new Uint8Array(chunk.byteLength + 2);
+	var number_buffer = new Uint8Array(2);
+	//var n = ((number_of_chunk>>8)|(number_of_chunk<<8))%65536;
+	number_buffer[0] = number_of_chunk;
+	number_buffer[1] = number_of_chunk>>8;
+	msg_stream.set(number_buffer, 0);
+	msg_stream.set(chunk_array,2);
+
+	sendChatMessage(msg_stream.buffer);
+	number_of_chunk = (number_of_chunk + 1) % 65536 ;
+        //document.getElementById('byte_content').textContent = evt.target.result;
+        //document.getElementById('byte_range').textContent = (start+1)/1024;
+			
+			
+      }
+     };
+	
+	/*
+	reader.onload = function(e) {
+		feedIt();
+		//console.log('appending chunk:' + temp);
+	};
+	*/
+	
+	var blob;
+	blob = file.slice(start, start + 16382)
+	reader.readAsArrayBuffer(blob);
+	
+	
+    
+  }
+
+  document.querySelector('.readBytesButtons').addEventListener('click', function(evt) {
+    if (evt.target.tagName.toLowerCase() == 'button') {
+		setInterval('feedIt()', 50);   
+    }
+  }, false);
+
+
+function feedIt(){
+	readBlob(temp);
+	temp+=16382;
+}
+
+sender.onclick=function(e){
+	document.getElementById("choose").style.display="none";
+	document.getElementById("sender").style.display="inline";
+	document.getElementById("warning").style.display="inline";
+};
+
+receiver.onclick=function(e){
+	document.getElementById("choose").style.display="none";
+	document.getElementById("receiver").style.display="inline";
+};
 
 function logError(error) {
     console.log(error.name + ": " + error.message);
