@@ -1,36 +1,101 @@
 <!DOCTYPE html>
+<!--
+
+  This is an example of a video streaming system, it includes sender, receiver and player. 
+  It works over WebRTC.
+
+  Copyright (C) 2014 Cristóbal Medina López.
+		     Vicente González Ruiz.
+
+  GNU/GPL v3 or later http://www.gnu.org/licenses/gpl-3.0.html
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+ -->
 <html>
 <head>
-<meta name="author" content="Cristóbal Medina López and Vicente Gonzalez Ruiz" />
+<meta name="author" content="Cristóbal Medina López and Vicente González Ruiz" />
 <link href="style.css" rel="stylesheet" type="text/css">
-<title>WebRTC Peer Example</title>
-<style>
-.oculto {display:none;}
-</style>
+<title>Video Streaming System over WebRTC using P2PSP</title>
 </head>
 <body>
+
 <div>
   <div id="header" class="super">
 	<img style="float: left;" src="imgs/p2psp.png" />
     <div class="title">
-	<b>Experiments</b> <br />P2PSP - WebRTC <br />
-	<span style="font-size:medium;"><a style="text-decoration:none;color:#FFF;" href="http://bazaar.launchpad.net/~p2psp/p2psp/webrtc/files/head:/src/experiments/WebRTCP2PStreaming/" >Get source code! </a></span>
+	<b>Experiments</b> <br />Video Streaming System over WebRTC using P2PSP <br />
+	<span style="font-size:medium;"><a style="text-decoration:none;color:#FFF;" href="https://github.com/cristobalmedinalopez/p2psp-webrtc-experiments/tree/master/src/experiments/WebRTCStreaming" >Get source code! </a></span>
      </div>
-  </div><br />
+  </div>
+
+  <div id="panel">
+	<div id="choose">
+		Does this will act as 
+		<button id="btnSender">Sender</button>
+		OR
+		<button id="btnReceiver">Receiver</button>
+		?
+	</div>
+	<div id="receiver" class="receiver">
+		Receive stream from (Peer ID):
+		<input id="msg" type="text" name="msg">
+		<button id="initiateConnection">Enter</button>
+	</div>
+
+	<div id="sender" class="sender">
+		Select a video file to transmit:
+		<input type="file" id="files" name="file" />
+		<span class="readBytesButtons">
+			<button id="streamit">Stream it!</button>
+        </span><br />
+		Use this code to connect: <spam id="PeerID" style="color:red;"></spam>
+	</div>
+	  
+  </div>
+
+  <center><span id="warning" class="warning">Remember first is necessary to connect the receivers to the sender. After, select a video file (MP4 fragmented) and press "Stream it!"</span></center>
+
+  <br />
    <center>
-  <video controls autoplay id="player" width="80%" height="80%"></video>
- </center>
-<div>
-  <div>
-    <button id="initiateConnection">Initiate Connection</button>
-  </div>
+   <div>
+		<video controls autoplay id="player" width="60%" height="60%"></video>
+		<div id="byte_range"></div>
+		<div id="byte_content"></div>
+   </div>
+   
+	
+	<div class="info">
+	This experiment allows to transmit a MP4 fragmented video file directly to others browsers like a stream via WebRTC DataChannel and Media Source Extensions, i.e., the video streaming is not passing through a server, it's a browser-to-browser connection.
+<br /><br />
+Happy Streaming ;-)
+<br /><br />
+*Some videos may not work due to encoding. You can try it with this:
+<br /><a href="http://www.hpca.ual.es/~cmedina/files/bbb-cbr-1300-frag.mp4">Example 1: Big Buck Bunny</a>
+	</div>
+	</center>
+  	<script src="peer.js"></script>
 
-  Received Messages:
-  <div id="receive">
-  
-  </div>
+<script>
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-  <script src="peer.js"></script>
+	ga('create', 'UA-42660390-1', 'p2psp.org');
+	ga('send', 'pageview');
+
+</script>
 </div>
 </body>
 </html>

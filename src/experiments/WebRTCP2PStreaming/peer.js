@@ -37,6 +37,7 @@ var creator=document.getElementById("creator");
 var btnStream= document.getElementById("streamit");
 var temp=0;
 var splitter = 0;
+var last_msg_from_splitter = null;
 btnStream.disabled=true;
 
 // ---------------- Streaming Video Part ----------------
@@ -125,9 +126,13 @@ function seek (e) {
 function appendChunk(){
     if (!sourceBuffer.updating){
         console.log("chunk sent to the player");
-        chunk = new Uint8Array(queue[chunk_to_play]);
-        sourceBuffer.appendBuffer(chunk);
-	chunk_to_play = (chunk_to_play + 1) % buffer_size;
+	if (queue[chunk_to_play] != ""){
+        	chunk = new Uint8Array(queue[chunk_to_play]);
+        	sourceBuffer.appendBuffer(chunk);
+		chunk_to_play = (chunk_to_play + 1) % buffer_size;
+	}else{
+		console.log("lack of chunk, waiting...");
+	}
     }
 }
 
@@ -190,7 +195,7 @@ function start(isInitiator,i) {
 	}  
 	peerlist.push(i);
 	console.log("PEER LIST UPDATE: "+peerlist);
-	console.log("Saved in slot: "+i+" PeerConection: "+pcs[i]);
+	console.log("Saved in slot: "+i);
 }
 
 signalingChannel.onmessage = function (evt) {
@@ -253,28 +258,43 @@ function setupChat(i) {
 
     channel[i].onmessage = function (evt) {
 
-	console.log("msg received from "+i+" : " + evt.data);
-        var msg_stream = evt.data;  
+	console.log(evt);
+        var msg_stream = evt.data;
 
 
 	if (typeof msg_stream == "string"){    
 		incoming_peerlist=JSON.parse(msg_stream);
-		array_de_los_huevos = incoming_peerlist.peerlist;
-		console.log(array_de_los_huevos);
-		for (i=0; i<array_de_los_huevos.length; i++){
-			console.log("incoming: "+array_de_los_huevos[i]);
-			if (array_de_los_huevos[i] != idpeer)
-				start(true,array_de_los_huevos[i]);	
+		list = incoming_peerlist.peerlist;
+		console.log(list);
+		for (i=0; i<list.length; i++){
+			console.log("incoming: "+list[i]);
+			if (list[i] != idpeer)
+				start(true,list[i]);	
 		}
 		return;  	
     	} 
      
 
-       handleChunk(msg_stream.slice(2), (new Uint16Array(msg_stream.slice(0,2)))[0]);
+       var sender = new Uint16Array(msg_stream.slice(0,2))[0];
+       console.log("chunk received from "+sender+" spl= "+splitter);
+       if (sender == splitter){
+	     var chunk_array = new Uint8Array(msg_stream);
+	     var msg_stream_updated = new Uint8Array(msg_stream);
+	
+	     var sender_id = new Uint8Array(2);
+	     sender_id[0] = idpeer;
+	     sender_id[1] = idpeer>>8;	
+	
 
-       if (i == splitter){
-	     sendChatMessage(chunk);
+	     msg_stream_updated.set(sender_id, 0);
+	     msg_stream_updated.set(chunk_array.slice(2),2);
+	
+	     last_msg_from_splitter = msg_stream_updated;
+	     
 	}
+       	sendChatMessage(last_msg_from_splitter);
+
+       handleChunk(msg_stream.slice(4), (new Uint16Array(msg_stream.slice(2,4)))[0]);
 
     };
 }
@@ -336,13 +356,19 @@ function readBlob(time) {
 
 
 	var chunk_array = new Uint8Array(chunk);
-	var msg_stream = new Uint8Array(chunk.byteLength + 2);
+	var msg_stream = new Uint8Array(chunk.byteLength + 2 + 2);
+	
+	var sender_id = new Uint8Array(2);
+	sender_id[0] = idpeer;
+	sender_id[1] = idpeer>>8;	
+	
 	var number_buffer = new Uint8Array(2);
-	//var n = ((number_of_chunk>>8)|(number_of_chunk<<8))%65536;
 	number_buffer[0] = number_of_chunk;
 	number_buffer[1] = number_of_chunk>>8;
-	msg_stream.set(number_buffer, 0);
-	msg_stream.set(chunk_array,2);
+
+	msg_stream.set(sender_id, 0);
+	msg_stream.set(number_buffer, 2);
+	msg_stream.set(chunk_array,4);
 
 	sendChatMessage(msg_stream.buffer);
 	number_of_chunk = (number_of_chunk + 1) % 65536 ;
@@ -361,7 +387,7 @@ function readBlob(time) {
 	*/
 	
 	var blob;
-	blob = file.slice(start, start + 16382)
+	blob = file.slice(start, start + 16380)
 	reader.readAsArrayBuffer(blob);
 	
 	
@@ -377,7 +403,7 @@ function readBlob(time) {
 
 function feedIt(){
 	readBlob(temp);
-	temp+=16382;
+	temp+=16380;
 }
 
 sender.onclick=function(e){
