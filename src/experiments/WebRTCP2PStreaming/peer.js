@@ -56,7 +56,7 @@ if (!!!window.RTCPeerConnection || !!!window.RTCIceCandidate || !!!window.RTCSes
 }
 
 var sourceBuffer;
-var buffer_size = 256;
+var buffer_size = 512;
 var chunk_to_play = 0;
 var queue = new Array(buffer_size);
 var current = 0;
