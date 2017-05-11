@@ -37,6 +37,7 @@ var creator=document.getElementById("creator");
 var btnStream= document.getElementById("streamit");
 var temp=0;
 var splitter = 0;
+var pending = 0;
 var last_msg_from_splitter = null;
 btnStream.disabled=true;
 
@@ -125,10 +126,10 @@ function seek (e) {
 
 function appendChunk(){
     if (!sourceBuffer.updating){
-        console.log("chunk sent to the player");
-	if (queue[chunk_to_play] != ""){
+	if (queue[chunk_to_play] != null){
         	chunk = new Uint8Array(queue[chunk_to_play]);
         	sourceBuffer.appendBuffer(chunk);
+		console.log("chunk sent to the player: "+chunk_to_play);
 		chunk_to_play = (chunk_to_play + 1) % buffer_size;
 	}else{
 		console.log("lack of chunk, waiting...");
@@ -290,9 +291,13 @@ function setupChat(i) {
 	     msg_stream_updated.set(chunk_array.slice(2),2);
 	
 	     last_msg_from_splitter = msg_stream_updated;
+	     pending = peerlist.length -1;
 	     
 	}
-       	sendChatMessage(last_msg_from_splitter);
+	if (last_msg_from_splitter != null && pending > 0){
+	       	sendChatMessage(last_msg_from_splitter);
+		pending = pending - 1;
+	}
 
        handleChunk(msg_stream.slice(4), (new Uint16Array(msg_stream.slice(2,4)))[0]);
 
@@ -396,7 +401,7 @@ function readBlob(time) {
 
   document.querySelector('.readBytesButtons').addEventListener('click', function(evt) {
     if (evt.target.tagName.toLowerCase() == 'button') {
-		setInterval('feedIt()', 50);   
+		setInterval('feedIt()', 100);   
     }
   }, false);
 
