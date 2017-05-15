@@ -36,7 +36,7 @@ var msg = document.getElementById("msg");
 var creator=document.getElementById("creator");
 var btnStream= document.getElementById("streamit");
 var temp=0;
-btnStream.disabled=true;
+btnStream.disabled=false;
 
 // ---------------- Streaming Video Part ----------------
 
@@ -251,7 +251,7 @@ function sendChatMessage(chunk) {
 			try{
 				channel[peerlist[i]].send(chunk);
 			}catch(e){
-				console.log(i+" said bye!");
+				console.log(peerlist[i]+" said bye!");
 			}
 
 		}
@@ -309,6 +309,7 @@ function readBlob(time) {
 		setInterval('feedIt()', 50);   
     }
   }, false);
+
 
 function feedIt(){
 	readBlob(temp);
