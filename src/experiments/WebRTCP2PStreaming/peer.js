@@ -36,10 +36,11 @@ var icecandidates = document.getElementById("candidateices");
 var creator=document.getElementById("creator");
 var btnStream= document.getElementById("streamit");
 var temp=0;
-var splitter = 0;
+splitter = 0;
 var pending = 0;
 var last_msg_from_splitter = null;
-btnStream.disabled=true;
+var last_erased = 0.0;
+btnStream.disabled=false;
 
 // ---------------- Streaming Video Part ----------------
 
@@ -58,6 +59,7 @@ if (!!!window.RTCPeerConnection || !!!window.RTCIceCandidate || !!!window.RTCSes
 var sourceBuffer;
 var buffer_size = 512;
 var chunk_to_play = 0;
+var buffer_target = (buffer_size/10);
 var queue = new Array(buffer_size);
 var current = 0;
 var video = document.getElementById("player");
@@ -104,13 +106,24 @@ function onSourceOpen() {
     //videoTag.addEventListener('seeking', onSeeking.bind(videoTag, mediaSource));
     //videoTag.addEventListener('progress', onProgress.bind(videoTag, mediaSource));
 
-    //video.addEventListener('timeupdate', checkBuffer);
+    //video.addEventListener('timeupdate', cleanBuffer);
     video.addEventListener('canplay', function () {
             video.play();
     });
     video.addEventListener('seeking', seek);
   }
 
+function cleanBuffer(){
+	console.log("%cStatus "+buffer_target,"color:#04B431");
+	if (video.currentTime > (buffer_target)){
+		if (!sourceBuffer.updating){
+			sourceBuffer.remove(last_erased, (buffer_target/1.2));
+			console.log("%cBuffer Removed from: "+last_erased+" until "+(buffer_target/1.2), "color:#04B431");
+			last_erased = (buffer_target/1.2);
+			buffer_target = (video.currentTime + (buffer_size/10));
+		}
+	}
+}
 
 function seek (e) {
 	console.log(e);
@@ -125,16 +138,17 @@ function seek (e) {
 
 
 function appendChunk(){
-    if (!sourceBuffer.updating){
 	if (queue[chunk_to_play] != null){
+	    if (!sourceBuffer.updating){
         	chunk = new Uint8Array(queue[chunk_to_play]);
         	sourceBuffer.appendBuffer(chunk);
-		console.log("chunk sent to the player: "+chunk_to_play);
+		//console.log("chunk sent to the player: "+chunk_to_play);
+		console.log("%c"+chunk_to_play,"color:#CCC");
 		chunk_to_play = (chunk_to_play + 1) % buffer_size;
+	    }
 	}else{
 		console.log("lack of chunk, waiting...");
 	}
-    }
 }
 
 /*
@@ -259,16 +273,15 @@ function setupChat(i) {
 
     channel[i].onmessage = function (evt) {
 
-	console.log(evt);
         var msg_stream = evt.data;
 
 
 	if (typeof msg_stream == "string"){    
 		incoming_peerlist=JSON.parse(msg_stream);
 		list = incoming_peerlist.peerlist;
-		console.log(list);
+		//console.log(list);
 		for (i=0; i<list.length; i++){
-			console.log("incoming: "+list[i]);
+			//console.log("incoming: "+list[i]);
 			if (list[i] != idpeer)
 				start(true,list[i]);	
 		}
@@ -277,7 +290,7 @@ function setupChat(i) {
      
 
        var sender = new Uint16Array(msg_stream.slice(0,2))[0];
-       console.log("chunk received from "+sender+" spl= "+splitter);
+       //console.log("chunk received from "+sender+" spl= "+splitter);
        if (sender == splitter){
 	     var chunk_array = new Uint8Array(msg_stream);
 	     var msg_stream_updated = new Uint8Array(msg_stream);
@@ -316,17 +329,17 @@ function sendPeerList(peer){
 function sendChatMessage(chunk) {
 
 	if (peerlist[peer_index] == splitter){
-		console.log("next is the splitter");
+		//console.log("next is the splitter");
 		peer_index = (peer_index + 1) % peerlist.length;
 	}
 
 	if (peerlist[peer_index]!=idpeer && peerlist[peer_index] != splitter){
 		//console.log("send to "+peerlist[i]); 
-		console.log("Sending to peer: " + peerlist[peer_index]); 
+		//console.log("Sending to peer: " + peerlist[peer_index]); 
 		try{
 			channel[peerlist[peer_index]].send(chunk);
 		}catch(e){
-			console.log(i+" said bye!");
+			console.log(peerlist[peer_index]+" said bye!");
 		}
 
 	}
