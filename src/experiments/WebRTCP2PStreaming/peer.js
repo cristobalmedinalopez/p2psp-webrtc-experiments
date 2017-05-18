@@ -69,7 +69,7 @@ mediaSource.addEventListener('sourceopen', onSourceOpen);
 
 
 function handleChunk(chunk, number_of_chunk){
-	console.log(number_of_chunk);
+	//console.log(number_of_chunk);
 	
 	queue[number_of_chunk%buffer_size] = chunk
 
@@ -102,11 +102,11 @@ var sourceBuffer = null;
 function onSourceOpen() {
 
     sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.42E01E, mp4a.40.2"');
-
+    sourceBuffer.mode = 'segments';
     //videoTag.addEventListener('seeking', onSeeking.bind(videoTag, mediaSource));
     //videoTag.addEventListener('progress', onProgress.bind(videoTag, mediaSource));
 
-    //video.addEventListener('timeupdate', cleanBuffer);
+    video.addEventListener('timeupdate', cleanBuffer);
     video.addEventListener('canplay', function () {
             video.play();
     });
@@ -114,7 +114,7 @@ function onSourceOpen() {
   }
 
 function cleanBuffer(){
-	console.log("%cStatus "+buffer_target,"color:#04B431");
+	//console.log("%cStatus "+buffer_target,"color:#04B431");
 	if (video.currentTime > (buffer_target)){
 		if (!sourceBuffer.updating){
 			sourceBuffer.remove(last_erased, (buffer_target/1.2));
@@ -143,7 +143,7 @@ function appendChunk(){
         	chunk = new Uint8Array(queue[chunk_to_play]);
         	sourceBuffer.appendBuffer(chunk);
 		//console.log("chunk sent to the player: "+chunk_to_play);
-		console.log("%c"+chunk_to_play,"color:#CCC");
+		//console.log("%c"+chunk_to_play,"color:#CCC");
 		chunk_to_play = (chunk_to_play + 1) % buffer_size;
 	    }
 	}else{
