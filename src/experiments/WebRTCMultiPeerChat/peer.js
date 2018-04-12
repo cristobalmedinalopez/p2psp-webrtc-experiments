@@ -20,9 +20,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-var signalingChannel = new WebSocket("ws://127.0.0.1:9876/");
+var signalingChannel = new WebSocket("ws://signalingserver.com:9876/");
 var configuration = {iceServers: [{ url: 'stun:stun.l.google.com:19302' }]};
 //var configuration = {iceServers: [{ url: 'stun:150.214.150.137:3478' }]};
+
 var pcs=[];
 var channel=[];
 var peerlist=[];
@@ -46,22 +47,28 @@ btnSend.onclick=sendChatMessage;
 function start(isInitiator,i) {
      //iniConnection.disabled=true;
 	console.log("creado para: "+i);
-	pcs[i] = new webkitRTCPeerConnection(configuration, {optional: []});
+	pcs[i] = new RTCPeerConnection(configuration);
 	
 
 	// send any ice candidates to the other peer
 	pcs[i].onicecandidate = function (evt) {
-		if (evt.candidate){
-			signalingChannel.send(JSON.stringify({ "candidate": evt.candidate , "idtransmitter":'"'+idpeer+'"', "idreceiver":'"'+i+'"'}));
-		}
+		signalingChannel.send(JSON.stringify({ "candidate": evt.candidate , "idtransmitter":'"'+idpeer+'"', "idreceiver":'"'+i+'"'}));
 	};
 
 
 	// let the "negotiationneeded" event trigger offer generation
 	pcs[i].onnegotiationneeded = function () {
-		pcs[i].createOffer(function(desc){localDescCreated(desc,pcs[i],i);});
-		console.log("Create and send OFFER");
-	}
+		pcs[i].createOffer().then(function(offer){
+			return pcs[i].setLocalDescription(offer);
+		})
+		.then(function() {
+			signalingChannel.send(JSON.stringify({ "sdp": pcs[i].localDescription , "idtransmitter":'"'+idpeer+'"', "idreceiver":'"'+i+'"'}));			
+			console.log("Create and send OFFER");
+			
+		})
+		.catch(logError)
+		
+	};
 
 	if (isInitiator) {
 		// create data channel and setup chat
@@ -77,19 +84,12 @@ function start(isInitiator,i) {
 	console.log("Saved in slot: "+i+" PeerConection: "+pcs[i]);
 }
 
-function localDescCreated(desc,pc,i) {
-    pc.setLocalDescription(desc, function () {
-	console.log("localDescription is Set");
-        signalingChannel.send(JSON.stringify({ "sdp": pc.localDescription , "idtransmitter":'"'+idpeer+'"', "idreceiver":'"'+i+'"'}));
-    }, logError);
-}
-
 signalingChannel.onmessage = function (evt) {
 	handleMessage(evt);
 }
 
 function handleMessage(evt){
-	var message = JSON.parse(evt.data);
+    var message = JSON.parse(evt.data);
 	
     if (message.numpeer){    
 		idpeer=message.numpeer;
@@ -97,7 +97,7 @@ function handleMessage(evt){
 		return;  	
     }  
 
-	if (message.peerlist){    
+    if (message.peerlist){    
 		console.log('Peer List '+message.peerlist);
 		peerlist=JSON.parse(message.peerlist);
 		for (i in peerlist){
@@ -107,7 +107,7 @@ function handleMessage(evt){
     }  
    
     var id=(message.idtransmitter).split('"').join(''); 
-	var idreceiver=(message.idreceiver).split('"').join(''); 
+    var idreceiver=(message.idreceiver).split('"').join(''); 
     console.log("Received from: "+id+" and send to: "+idreceiver);
 
     if (!pcs[id]) { 
@@ -118,20 +118,26 @@ function handleMessage(evt){
     } 	
 
     if (message.sdp && idreceiver==idpeer){
-        //console.log(message.sdp);   
-	pcs[id].setRemoteDescription(new RTCSessionDescription(message.sdp), function () {
-		console.log("remoteDescription is Set");
-    		// if we received an offer, we need to answer
-		if (pcs[id].remoteDescription.type == "offer"){
+        //console.log(message.sdp);  
+	if (message.sdp.type == "offer"){   
+		pcs[id].setRemoteDescription(message.sdp).then(function () {
+			return pcs[id].createAnswer();
+		})
+		.then(function (answer) {
+			return pcs[id].setLocalDescription(answer);
+			console.log("remoteDescription is Set");
+		})
+		.then(function  () {
+			signalingChannel.send(JSON.stringify({ "sdp": pcs[id].localDescription , "idtransmitter":'"'+idpeer+'"', "idreceiver":'"'+id+'"'}));			
 			console.log("Create and send ANSWER");
-        		pcs[id].createAnswer(function(desc){localDescCreated(desc,pcs[id],id);});
-    		}
-        });
-    }
-
-    if (message.candidate && idreceiver==idpeer){
-		console.log("Received ice candidate: "+ message.candidate.candidate); 
-		pcs[id].addIceCandidate(new RTCIceCandidate(message.candidate));
+		})
+		.catch(logError);
+	}else
+		pcs[id].setRemoteDescription(message.sdp).catch(logError);
+    }else if (message.candidate){
+		console.log(message.candidate)
+		pcs[id].addIceCandidate(message.candidate).catch(logError);
+		console.log("Received ice candidate: "+ message.candidate);
     }
 
 }
